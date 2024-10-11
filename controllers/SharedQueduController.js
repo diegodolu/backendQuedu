@@ -1,7 +1,16 @@
 const SharedQuedu = require('../models/SharedQuedu');
 
-SharedQuedu.find({},(err, sharedQuedu) => {
-    if (err) return res.status(500).send({ message: "Error en la petición" });
-    if (!sharedQuedu) return res.status(404).send({ message: "No hay sharedQuedu" });
-    res.status(200).send({ sharedQuedu });
-})
+// Conseguir todos los SharedQuedus
+const getSharedQuedus = async (req, res) => {
+  try {
+    const sharedQuedus = await SharedQuedu.find({});
+    if (!sharedQuedus) return res.status(404).send({ message: "No hay sharedQuedus" });
+    res.status(200).send({ sharedQuedus });
+  } catch (err) {
+    res.status(500).send({ message: "Error en la petición" });
+  }
+};
+
+module.exports = {
+  getSharedQuedus
+};

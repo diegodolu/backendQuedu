@@ -1,8 +1,8 @@
-var express = require('express');
-var sharedQueduController = require('../controllers/sharedQueduController');
+const express = require('express');
+const SharedQueduController = require('../controllers/SharedQueduController');
 
-var api = express.Router();
+const router = express.Router();
 
-api.get('/sharedQuedu', sharedQueduController.getUser);
+router.get('/sharedQuedus', SharedQueduController.getSharedQuedus);
 
-module.exports = api;
+module.exports = router;

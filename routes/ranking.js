@@ -1,8 +1,8 @@
-var express = require('express');
-var RankingController = require('../controllers/RankingController');
+const express = require('express');
+const RankingController = require('../controllers/RankingController');
 
-var api = express.Router();
+const router = express.Router();
 
-api.get('/ranking', RankingController.getRanking);
+router.get('/rankings', RankingController.getRanking);
 
-module.exports = api;
+module.exports = router;

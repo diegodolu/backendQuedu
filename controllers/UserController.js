@@ -30,7 +30,7 @@ const getUserById = async (req, res) => {
 const createUser = async (req, res) => {
   try {
     const user = new User();
-    user.name = req.body.name;
+    user.username = req.body.username;
     user.password = req.body.password;
     user.email = req.body.email;
     await user.save();
@@ -40,9 +40,7 @@ const createUser = async (req, res) => {
   }
 };
 
-
 // ---------------------------------------------- Quedus ----------------------------------------------
-
 
 // Conseguir los 4 quedus más recientes de un usuario en específico ----------------------------
 const getRecentPersonalQuedusByUser = async (userId) => {
@@ -65,7 +63,6 @@ const getRecentPersonalQuedusByUser = async (userId) => {
     return { message: "Error en la consulta" };
   }
 };
-
 
 // Generar Quedu con IA -----------------------------------------------------------------------
 const generateQuedu = async (prompt) => {
@@ -92,7 +89,6 @@ const generateQuedu = async (prompt) => {
   }
 };
 
-
 // Crear un Quedu ------------------------------------------------------------------------------
 const createQuedu = async ({ userId, course, name, questions }) => {
   try {
@@ -117,7 +113,12 @@ const createQuedu = async ({ userId, course, name, questions }) => {
   }
 };
 
-
-// Últimos 2 quedus por curso ------------------------------------------------------------------
-
-// Quedus por curso ----------------------------------------------------------------------------
+// Exportar las funciones del controlador
+module.exports = {
+  getUsers,
+  getUserById,
+  createUser,
+  getRecentPersonalQuedusByUser,
+  generateQuedu,
+  createQuedu
+};
