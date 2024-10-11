@@ -11,5 +11,8 @@ var community_routes = require('./routes/community');
 var ranking_routes = require('./routes/ranking');
 
 app.use('/api', user_routes);
+app.use('/api', sharedQuedu_routes);
+app.use('/api', community_routes);
+app.use('/api', ranking_routes);
 
 module.exports = app;

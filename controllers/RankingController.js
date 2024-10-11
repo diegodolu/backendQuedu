@@ -1,9 +1,15 @@
 const Ranking = require("../models/Ranking");
 
-function getRanking(req, res) {
-  Ranking.find({}, (err, ranking) => {
-    if (err) return res.status(500).send({ message: "Error en la petición" });
+const getRanking = async (req, res) => {
+  try {
+    const ranking = await Ranking.find({});
     if (!ranking) return res.status(404).send({ message: "No hay ranking" });
-    res.status(200).send;
-  });
-}
+    res.status(200).send({ ranking });
+  } catch (err) {
+    res.status(500).send({ message: "Error en la petición" });
+  }
+};
+
+module.exports = {
+  getRanking
+};

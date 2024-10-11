@@ -1,8 +1,8 @@
-var express = require('express');
-var CommunityController = require('../controllers/CommunityController');
+const express = require('express');
+const CommunityController = require('../controllers/CommunityController');
 
-var api = express.Router();
+const router = express.Router();
 
-api.get('/community', CommunityController.getCommunity);
+router.get('/communities', CommunityController.getCommunity);
 
-module.exports = api;
+module.exports = router;
