@@ -1,4 +1,6 @@
 const User = require("../models/User");
+const SharedQuedu = require("../models/SharedQuedu");
+const Community = require("../models/Community");
 const axios = require('axios'); 
 
 // ---------------------------------------------- Usuarios ----------------------------------------------
@@ -202,6 +204,86 @@ const subscribeToCommunity = async (req, res) => {
   }
 }
 
+
+
+
+// ---------------------------------------------- Compartir Quedus ----------------------------------------------
+
+// Usuario comparte un Quedu en una comunidad
+
+const sharePersonalQuedu = async (req, res) => {
+  const { userId, personalQueduId, communityId } = req.body;
+
+  try {
+    // 1. Buscar al usuario que comparte el personalQuedu
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
+    // 2. Buscar el personalQuedu en el array de cursos del usuario
+    let personalQuedu;
+    let courseIndex, queduIndex;
+
+    for (let i = 0; i < user.courses.length; i++) {
+      const course = user.courses[i];
+      const quedu = course.personalQuedus.id(personalQueduId);
+      if (quedu) {
+        personalQuedu = quedu;
+        courseIndex = i;
+        queduIndex = course.personalQuedus.indexOf(quedu);
+        break;
+      }
+    }
+
+    if (!personalQuedu) {
+      return res.status(404).json({ message: "personalQuedu no encontrado" });
+    }
+
+    // 3. Crear un nuevo documento de SharedQuedu basado en el personalQuedu
+    const sharedQuedu = new SharedQuedu({
+      name: personalQuedu.name,
+      successPercentaje: personalQuedu.successPercentaje,
+      attempt: personalQuedu.attempt,
+      createdAt: personalQuedu.createdAt,
+      solvedBy: [], // Inicialmente vacío
+      questions: personalQuedu.questions,
+    });
+
+    // Guardar el nuevo SharedQuedu en la base de datos
+    await sharedQuedu.save();
+
+    // 4. Agregar el SharedQuedu a la comunidad
+    const community = await Community.findById(communityId);
+    if (!community) {
+      return res.status(404).json({ message: "Comunidad no encontrada" });
+    }
+
+    // Agregar el nuevo SharedQuedu a la comunidad
+    community.sharedQuedusIds.push(sharedQuedu._id);
+    community.numberOfQuedus += 1; // Aumentar el número de quedus
+    await community.save();
+
+    // 5. Eliminar el personalQuedu de la lista del usuario
+    user.courses[courseIndex].personalQuedus.splice(queduIndex, 1);
+
+    // 6. Agregar el ID del SharedQuedu al campo `sharedQuedusIds` del curso del usuario
+    user.courses[courseIndex].sharedQuedusIds.push(sharedQuedu._id);
+
+    // Guardar los cambios en el usuario
+    await user.save();
+
+    // Respuesta exitosa
+    return res.status(200).json({ message: "personalQuedu compartido exitosamente" });
+
+  } catch (error) {
+    console.error("Error compartiendo el personalQuedu:", error.message);
+    return res.status(500).json({ message: "Error compartiendo el personalQuedu" });
+  }
+};
+
+
+
 // Exportar las funciones del controlador
 module.exports = {
   getUsers,
@@ -211,5 +293,7 @@ module.exports = {
   generateQuedu,
   createQuedu,
   createCourse,
-  createPersonalQuedus
+  createPersonalQuedus,
+  subscribeToCommunity,
+  sharePersonalQuedu
 };
