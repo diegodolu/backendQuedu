@@ -113,6 +113,57 @@ const createQuedu = async ({ userId, course, name, questions }) => {
   }
 };
 
+// Crear un Quedu para Postman ----------------------------------------------------------------
+
+const createPersonalQuedus = async (req, res) => {
+  try {
+    const { userId, courseName, quedus } = req.body;
+
+    // Valida y ajusta el successPercentaje basado en las respuestas correctas
+    const updatedQuedus = quedus.map(quedu => {
+      // Validar que haya al menos 2 preguntas
+      if (quedu.questions.length < 2) {
+        throw new Error("Cada quedu debe tener al menos 2 preguntas.");
+      }
+
+      quedu.attempt = 1;
+      quedu.solved = true;
+
+      quedu.questions.forEach(question => {
+        // Asegurarse de que cada pregunta tenga al menos 5 respuestas
+        if (question.answers.length < 5) {
+          throw new Error("Cada pregunta debe tener al menos 5 respuestas.");
+        }
+      });
+
+      // Calcular el porcentaje de éxito en función de las respuestas correctas
+      const totalQuestions = quedu.questions.length;
+      const correctAnswers = quedu.questions.flatMap(q => q.answers).filter(a => a.correct).length;
+      const percentageSteps = [0, 20, 40, 60, 80, 100]; // Posibles valores de successPercentaje
+      const successPercentage = percentageSteps[Math.floor((correctAnswers / (totalQuestions * 5)) * 5)];
+      quedu.successPercentaje = successPercentage;
+
+      return quedu;
+    });
+
+    // Actualiza el usuario y agrega los Quedus personalizados al curso
+    const updatedUser = await User.updateOne(
+      { _id: userId, "courses.name": courseName },
+      { $push: { "courses.$.personalQuedus": { $each: updatedQuedus } } },
+      { new: true }
+    );
+
+    if (updatedUser.nModified === 0) {
+      return res.status(404).send({ message: "Usuario o curso no encontrado" });
+    }
+
+    res.status(201).send({ message: "Quedus creados exitosamente", updatedUser });
+  } catch (error) {
+    res.status(500).send({ message: `Error al crear quedus, ${error.message}` });
+  }
+};
+
+
 
 
 // Crea un Curso ------------------------------------------------------------------------------
@@ -132,6 +183,25 @@ const createCourse = async (req, res ) => {
   }
 };
 
+
+// ---------------------------------------------- Sucribirse a Comunidad ----------------------------------------------
+
+// Suscribirse a una comunidad ---------------------------------------------------------
+const subscribeToCommunity = async (req, res) => {
+  try {
+    const { userId, communityId } = req.body;
+    const user = await User.updateOne(
+      { _id: userId },
+      { $push: { communityIds: communityId } }
+    );
+
+    res.status(201).send({ user });
+  }
+  catch (error) {
+    res.status(500).send({ message: `Error al suscribirse a la comunidad, ${error}` });
+  }
+}
+
 // Exportar las funciones del controlador
 module.exports = {
   getUsers,
@@ -140,5 +210,6 @@ module.exports = {
   getRecentPersonalQuedusByUser,
   generateQuedu,
   createQuedu,
-  createCourse
+  createCourse,
+  createPersonalQuedus
 };
