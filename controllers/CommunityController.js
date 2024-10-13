@@ -1,6 +1,6 @@
 const Community = require('../models/Community');
 
-// Conseguir todas las comunidades
+// Conseguir todas las comunidades --------------------------------------------------
 const getCommunity = async (req, res) => {
   try {
     const community = await Community.find({});
@@ -11,6 +11,21 @@ const getCommunity = async (req, res) => {
   }
 };
 
+// Crear una comunidad --------------------------------------------------------------
+const createCommunity = async (req, res) => {
+  try {
+    const community = new Community();
+    community.name = req.body.name;
+    community.numberOfQuedus = req.body.numberOfQuedus;
+    community.image = req.body.image;
+    await community.save();
+    res.status(201).send({ community });
+  } catch (err) {
+    res.status(500).send({ message: "Error al guardar la comunidad" });
+  }
+};
+
 module.exports = {
-  getCommunity
+  getCommunity,
+  createCommunity
 };
