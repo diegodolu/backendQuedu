@@ -78,6 +78,7 @@ const userSchema = new Schema({
           ],
         },
       ],
+      "sharedQuedusIds": [{ type: Types.ObjectId, ref: "SharedQuedu" }],
     },
   ],
 });

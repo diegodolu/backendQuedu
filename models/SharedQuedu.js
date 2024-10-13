@@ -1,30 +1,6 @@
 const mongoose = require("mongoose");
 const { Schema, Types } = mongoose;
 
-// Definir el esquema de preguntas
-const questionSchema = new Schema({
-  question: {
-    type: String,
-    required: true,
-  },
-  feedback: {
-    type: String,
-    required: true,
-  },
-  answers: [
-    {
-      answer: {
-        type: String,
-        required: true,
-      },
-      correct: {
-        type: Boolean,
-        required: true,
-      },
-    },
-  ],
-});
-
 // Definir el esquema de SharedQuedu
 const sharedQueduSchema = new Schema({
   name: {
@@ -46,7 +22,28 @@ const sharedQueduSchema = new Schema({
     default: Date.now,
   },
   solvedBy: [{ type: Types.ObjectId, ref: "User" }],
-  questions: [questionSchema],
+  questions: [{
+    question: {
+      type: String,
+      required: true,
+    },
+    feedback: {
+      type: String,
+      required: true,
+    },
+    answers: [
+      {
+        answer: {
+          type: String,
+          required: true,
+        },
+        correct: {
+          type: Boolean,
+          required: true,
+        },
+      },
+    ],
+  }],
 });
 
 const SharedQuedu = mongoose.model("SharedQuedu", sharedQueduSchema);
