@@ -113,6 +113,25 @@ const createQuedu = async ({ userId, course, name, questions }) => {
   }
 };
 
+
+
+// Crea un Curso ------------------------------------------------------------------------------
+const createCourse = async (req, res ) => {
+  try {
+    const { userId, courseName } = req.body;
+    const course = await User.updateOne
+    (
+      { _id: userId },
+      { $push: { courses: { name: courseName } } }
+    );
+
+    res.status(201).send({ course });
+  }
+  catch (error) {
+    res.status(500).send({ message: `Error al crear el curso, ${error}` });
+  }
+};
+
 // Exportar las funciones del controlador
 module.exports = {
   getUsers,
@@ -120,5 +139,6 @@ module.exports = {
   createUser,
   getRecentPersonalQuedusByUser,
   generateQuedu,
-  createQuedu
+  createQuedu,
+  createCourse
 };
