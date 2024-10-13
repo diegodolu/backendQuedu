@@ -1,5 +1,4 @@
 require('dotenv').config(); // Cargar las variables de entorno
-var mongoose = require('mongoose');
 var app = require('./app');
 const connectDB = require('./config/db');
 
@@ -17,13 +16,4 @@ connectDB().then(() => {
 // Ruta para la raíz
 app.get('/', (req, res) => {
   res.send('API is running...');
-});
-
-// Rutas de ejemplo
-app.get('/api/users', (req, res) => {
-  res.json({ message: 'Ruta de usuarios' });
-});
-
-app.get('/api/products', (req, res) => {
-  res.json({ message: 'Ruta de productos' });
 });
