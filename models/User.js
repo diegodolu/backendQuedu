@@ -82,9 +82,9 @@ const userSchema = new Schema({
         },
       ],
       "sharedQuedusIds": [{ type: Types.ObjectId, ref: "SharedQuedu" , default: [] }],
+      default: []
     },
   ],
-   default: []
 });
 
 const User = mongoose.model("User", userSchema);
