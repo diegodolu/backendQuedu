@@ -24,7 +24,7 @@ const userSchema = new Schema({
     type: Number,
     default: 0,
   },
-  communityIds: [{ type: Types.ObjectId, ref: "Community" }],
+  communityIds: [{ type: Types.ObjectId, ref: "Community", default: [] }],
   courses: [
     {
       name: {
@@ -51,7 +51,10 @@ const userSchema = new Schema({
             type: Date,
             default: Date.now,
           },
-          solvedBy: [{ type: Types.ObjectId, ref: "User" }],
+          solved:{ // Al momento de compartir el quedu, esto cambiaría a un SolvedBy
+            type: Boolean,
+            default: false,
+          },
           questions: [
             {
               question: {
@@ -78,9 +81,10 @@ const userSchema = new Schema({
           ],
         },
       ],
-      "sharedQuedusIds": [{ type: Types.ObjectId, ref: "SharedQuedu" }],
+      "sharedQuedusIds": [{ type: Types.ObjectId, ref: "SharedQuedu" , default: [] }],
     },
   ],
+   default: []
 });
 
 const User = mongoose.model("User", userSchema);
