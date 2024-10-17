@@ -1,4 +1,5 @@
 const Ranking = require("../models/Ranking");
+const User = require("../models/User");
 
 const getRanking = async (req, res) => {
   try {
@@ -10,6 +11,35 @@ const getRanking = async (req, res) => {
   }
 };
 
+const createRanking = async (req, res) => {
+  try {
+    const { month, ranking } = req.body;
+
+    // Validar que existan ambos campos
+    if (!month || !ranking) {
+      console.log(req.body);
+      return res.status(400).send({ message: "Faltan campos obligatorios" });
+    }
+
+    const newRanking = new Ranking({
+      month,
+      ranking: {
+        topContributors: ranking.topContributors,
+        topSolvers: ranking.topSolvers
+      }
+    });
+
+    await newRanking.save();
+    res.status(201).send({ ranking: newRanking });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: "Error al guardar el ranking" });
+  }
+};
+
+
+
 module.exports = {
-  getRanking
+  getRanking,
+  createRanking
 };
