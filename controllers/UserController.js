@@ -2,6 +2,7 @@ const User = require("../models/User");
 const SharedQuedu = require("../models/SharedQuedu");
 const Community = require("../models/Community");
 const axios = require('axios'); 
+const bcrypt = require('bcrypt');
 
 // ---------------------------------------------- Usuarios ----------------------------------------------
 
@@ -32,8 +33,12 @@ const getUserById = async (req, res) => {
 const createUser = async (req, res) => {
   try {
     const user = new User();
+
+    const saltRounds = 10;  // Número de rondas para generar el hash
+    const hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
+
     user.username = req.body.username;
-    user.password = req.body.password;
+    user.password = hashedPassword;
     user.email = req.body.email;
     await user.save();
     res.status(201).send({ user });
