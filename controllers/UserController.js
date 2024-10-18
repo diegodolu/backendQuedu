@@ -47,6 +47,27 @@ const createUser = async (req, res) => {
   }
 };
 
+// Iniciar sesión de un usuario ---------------------------------------------------
+
+const loginUser = async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const user = await User.findOne({ username: username });
+    if (!user) {
+      return res.status(404).send({ message: "Usuario no encontrado" });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).send({ message: "Contraseña incorrecta" });
+    }
+
+    res.status(200).send({ message: "Inicio de sesión exitoso", user });
+  } catch (error) {
+    res.status(500).send({ message: "Error al iniciar sesión" });
+  }
+}
+
 // ---------------------------------------------- Quedus ----------------------------------------------
 
 // Conseguir los 4 quedus más recientes de un usuario en específico ----------------------------
@@ -291,6 +312,7 @@ const sharePersonalQuedu = async (req, res) => {
 
 // Exportar las funciones del controlador
 module.exports = {
+  loginUser,
   getUsers,
   getUserById,
   createUser,
