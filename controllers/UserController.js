@@ -93,16 +93,20 @@ const getRecentPersonalQuedusByUser = async (userId) => {
 };
 
 // Generar Quedu con IA -----------------------------------------------------------------------
-const generateQuedu = async (prompt) => {
+const generateQuedu = async (req, res) => {
   try {
+    const {prompt} = req.body;
+    if (!prompt) {
+      return res.status(400).json({ error: "El campo 'prompt' es obligatorio" });
+    }
     const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-      model: "gpt-3.5-turbo", // o el modelo que desees utilizar
+      model: "gpt-4o-mini-2024-07-18", // o el modelo que desees utilizar
       messages: [{ role: "user", content: prompt }],
-      max_tokens: 500, // Ajusta el número de tokens según sea necesario
+      max_tokens: 11000, // Ajusta el número de tokens según sea necesario
       temperature: 0.7, // Ajusta la temperatura según tu necesidad
     }, {
       headers: {
-        'Authorization': `Bearer YOUR_API_KEY`, // Reemplaza con tu clave de API
+        'Authorization': `Bearer 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`, // Reemplaza con tu clave de API
         'Content-Type': 'application/json',
       }
     });
@@ -113,7 +117,7 @@ const generateQuedu = async (prompt) => {
     return parsedData; // Devuelve el quedu generado por la IA
   } catch (error) {
     console.error("Error al generar el Quedu:", error);
-    throw new Error("No se pudo generar el Quedu"); // Lanza un error si algo falla ---> verificar si sería mejor manejarlo con un return
+    return res.status(500).json({ error: "No se pudo generar el Quedu" });
   }
 };
 
