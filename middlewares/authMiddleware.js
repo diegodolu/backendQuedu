@@ -10,7 +10,7 @@ function verificarToken(req, res, next) {
 
   jwt.verify(token, process.env.JWT_SECRET, (err, usuario) => {
     if (err) {
-      return res.status(401).json({ mensaje: `Token no válido ${err}`});
+      return res.status(401).json({ mensaje: `Token no válido`});
     }
     req.usuario = usuario; // Guardar los datos del usuario para su uso en la ruta
     next();
