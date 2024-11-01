@@ -62,11 +62,17 @@ const loginUser = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).send({ message: "Contraseña incorrecta" });
     }
+
+
     const token = jwt.sign(
       { id: user.id, username: user.username },
       process.env.JWT_SECRET, // clave secreta segura para firmar el token
-      { expiresIn: '1h' } // token expira en 1 hora
+      { algorithm: 'HS256', expiresIn: '1h' } // token expira en 1 hora
     );
+
+
+
+
     res.status(200).send({ message: "Inicio de sesión exitoso", user, token });
 
   } catch (error) {
