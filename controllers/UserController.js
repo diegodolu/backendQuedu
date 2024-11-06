@@ -126,7 +126,7 @@ const createQuedu = async ({ userId, course, name, questions }) => {
     throw new Error("No se pudo crear el Quedu"); // Lanza un error si algo falla
   }
 };
-
+  
 // Añadir la función recibe file ------------------------------------------------------------------------------
 const recibeFile = async (req, res) => {
   try {
