@@ -1,7 +1,21 @@
 const User = require("../models/User");
 const axios = require('axios'); 
+const multer = require('multer');
+const path = require('path');
 
 // ---------------------------------------------- Usuarios ----------------------------------------------
+
+// Configuración de multer para almacenar archivos --------------------------------------------------
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage: storage });
 
 // Conseguir todos los usuarios --------------------------------------------------
 const getUsers = async (req, res) => {
@@ -113,6 +127,26 @@ const createQuedu = async ({ userId, course, name, questions }) => {
   }
 };
 
+// Añadir la función recibe file ------------------------------------------------------------------------------
+const recibeFile = async (req, res) => {
+  try {
+    const { userId, course, queduName, questions } = req.body;
+    const documentFile = req.file;
+
+    console.log("Datos recibidos:");
+    console.log("userId: ", userId);
+    console.log("course: ", course);
+    console.log("queduName: ", queduName);
+    console.log("questions: ", questions);
+    console.log("Archivo recibido: ", documentFile);
+
+    res.status(200).send({ message: 'Datos recibidos correctamente' });
+  } catch (error) {
+    console.error("Error al crear el Quedu con archivo: ", error);
+    res.status(500).send({ message: "Error al recibir datos" });
+  }
+}
+
 // Crear un Quedu para Postman ----------------------------------------------------------------
 
 const createPersonalQuedus = async (req, res) => {
@@ -211,5 +245,7 @@ module.exports = {
   generateQuedu,
   createQuedu,
   createCourse,
-  createPersonalQuedus
+  createPersonalQuedus,
+  recibeFile,
+  upload
 };
