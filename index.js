@@ -6,7 +6,7 @@ var port = process.env.PORT || 3000; // Asegúrate de que PORT esté definido
 
 // Conectar a la base de datos
 connectDB().then(() => {
-  app.listen(port, () => {
+  app.listen(port, '0.0.0.0', () => {
     console.log(`Servidor del api rest escuchando en http://localhost:${port}`);
   });
 }).catch((error) => {
