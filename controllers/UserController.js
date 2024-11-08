@@ -111,13 +111,13 @@ const getRecentPersonalQuedusByUser = async (userId) => {
 // Generar Quedu con IA -----------------------------------------------------------------------
 const generateQuedu = async (req, res) => {
   try {
-    const { prompt } = req.body;
+    const { prompt, nroPreguntas, nombreQuedu } = req.body;
     if (!prompt) {
       return res.status(400).json({ error: "El campo 'prompt' es obligatorio" });
     }
 
     // Llama a la función que genera el prompt
-    const generatedPrompt = generatePrompt(prompt);
+    const generatedPrompt = generatePrompt(prompt, nroPreguntas, nombreQuedu);
 
     const response = await axios.post('https://api.openai.com/v1/chat/completions', {
       model: "gpt-4o-mini-2024-07-18",
