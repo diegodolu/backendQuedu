@@ -6,7 +6,7 @@ function escapeSpecialCharacters(text) {
         .replace(/\n/g, '\\n');       
 }
 
-function generatePrompt(textoDeEntrada, nroPreguntas, nombreQuedu) {
+function generatePrompt(textoDeEntrada, nroPreguntas, nombreQuedu, fechaCreacion) {
     const textoEscapado = escapeSpecialCharacters(textoDeEntrada);
 
     const prompt = `A partir del siguiente contenido, genera un test de ${nroPreguntas} preguntas. Cada pregunta debe tener 4 alternativas, de las cuales solo una debe ser correcta. Además, proporciona una retroalimentación por cada pregunta para cuando el usuario responda bien o mal, no indiques si es correcto o no. El formato del test debe ser el siguiente JSON:
@@ -15,7 +15,7 @@ function generatePrompt(textoDeEntrada, nroPreguntas, nombreQuedu) {
      "name": "",
      "successPercentaje": 0,
      "attempt": 0,
-     "createdAt": "Fecha de creación",
+     "createdAt": "${fechaCreacion}",
      "solvedBy": [],
      "questions": [
        {

@@ -112,6 +112,9 @@ const getRecentPersonalQuedusByUser = async (userId) => {
 // // Generar Quedu con IA -----------------------------------------------------------------------
 const generateQuedu = async (req, res) => {
   try {
+
+    const fechaCreacion = new Date().toISOString().split('T')[0];
+
     const { nroPreguntas, nombreQuedu } = req.body;
 
     // Verificar si hay un archivo para procesar
@@ -124,7 +127,7 @@ const generateQuedu = async (req, res) => {
     const textoDeEntrada = await extractTextFromPDF(filePath); 
 
     // Llama a la función que genera el prompt, aplicando escape a caracteres especiales
-    const generatedPrompt = generatePrompt(textoDeEntrada, nroPreguntas, nombreQuedu);
+    const generatedPrompt = generatePrompt(textoDeEntrada, nroPreguntas, nombreQuedu, fechaCreacion);
 
     // Llama a la API de OpenAI para generar el Quedu
     const response = await axios.post('https://api.openai.com/v1/chat/completions', {
