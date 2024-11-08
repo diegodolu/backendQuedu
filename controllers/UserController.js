@@ -7,6 +7,7 @@ const multer = require('multer');
 const path = require('path');
 
 const { generatePrompt } = require('../controllers/generarPromptController');
+const { extractTextFromPDF } = require('../controllers/textExtraction');
 
 // ---------------------------------------------- Usuarios ----------------------------------------------
 
@@ -108,17 +109,24 @@ const getRecentPersonalQuedusByUser = async (userId) => {
   }
 };
 
-// Generar Quedu con IA -----------------------------------------------------------------------
+// // Generar Quedu con IA -----------------------------------------------------------------------
 const generateQuedu = async (req, res) => {
   try {
-    const { prompt, nroPreguntas, nombreQuedu } = req.body;
-    if (!prompt) {
-      return res.status(400).json({ error: "El campo 'prompt' es obligatorio" });
+    const { nroPreguntas, nombreQuedu } = req.body;
+
+    // Verificar si hay un archivo para procesar
+    if (!req.file) {
+      return res.status(400).json({ error: "El archivo es obligatorio" });
     }
 
-    // Llama a la función que genera el prompt
-    const generatedPrompt = generatePrompt(prompt, nroPreguntas, nombreQuedu);
+    // Extraer texto del archivo subido
+    const filePath = req.file.path; 
+    const textoDeEntrada = await extractTextFromPDF(filePath); 
 
+    // Llama a la función que genera el prompt, aplicando escape a caracteres especiales
+    const generatedPrompt = generatePrompt(textoDeEntrada, nroPreguntas, nombreQuedu);
+
+    // Llama a la API de OpenAI para generar el Quedu
     const response = await axios.post('https://api.openai.com/v1/chat/completions', {
       model: "gpt-4o-mini-2024-07-18",
       messages: [{ role: "user", content: generatedPrompt }],
@@ -133,15 +141,15 @@ const generateQuedu = async (req, res) => {
 
     console.log("Respuesta de la API:", response.data); 
 
-    const generatedData = response.data.choices[0].message.content; 
+    const generatedData = response.data.choices[0].message.content;
 
     // Limpiar el contenido del formato Markdown
     const jsonString = generatedData
-      .replace(/```json/g, '')  
-      .replace(/```/g, '')      
-      .trim();               
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
+      .trim();
 
-    console.log('JSON a parsear:', jsonString); 
+    console.log('JSON a parsear:', jsonString);
 
     let parsedData;
     try {
@@ -150,15 +158,67 @@ const generateQuedu = async (req, res) => {
     } catch (parseError) {
       console.error("Error al analizar JSON:", parseError);
       // Devuelve el contenido limpio sin analizar
-      return res.json({ content: jsonString }); 
+      return res.json({ content: jsonString });
     }
-    // Devuelve json generado con la API
-    return res.json(parsedData); // Devuelve json generado con la API
+
+    // Devuelve el JSON generado con la API
+    return res.json(parsedData);
   } catch (error) {
     console.error("Error al generar el Quedu:", error);
     return res.status(500).json({ error: "No se pudo generar el Quedu" });
   }
 };
+
+// const generateQuedu = async (req, res) => {
+//   try {
+//     const { prompt, nroPreguntas, nombreQuedu } = req.body;
+//     if (!prompt) {
+//       return res.status(400).json({ error: "El campo 'prompt' es obligatorio" });
+//     }
+
+//     // Llama a la función que genera el prompt
+//     const generatedPrompt = generatePrompt(prompt, nroPreguntas, nombreQuedu);
+
+//     const response = await axios.post('https://api.openai.com/v1/chat/completions', {
+//       model: "gpt-4o-mini-2024-07-18",
+//       messages: [{ role: "user", content: generatedPrompt }],
+//       max_tokens: 11000,
+//       temperature: 0.7,
+//     }, {
+//       headers: {
+//         'Authorization': `Bearer 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`, // Reemplaza con tu clave de API
+//         'Content-Type': 'application/json',
+//       }
+//     });
+
+//     console.log("Respuesta de la API:", response.data); 
+
+//     const generatedData = response.data.choices[0].message.content; 
+
+//     // Limpiar el contenido del formato Markdown
+//     const jsonString = generatedData
+//       .replace(/```json/g, '')  
+//       .replace(/```/g, '')      
+//       .trim();               
+
+//     console.log('JSON a parsear:', jsonString); 
+
+//     let parsedData;
+//     try {
+//       // Parsear el JSON devuelto por la API
+//       parsedData = JSON.parse(jsonString);
+//     } catch (parseError) {
+//       console.error("Error al analizar JSON:", parseError);
+//       // Devuelve el contenido limpio sin analizar
+//       return res.json({ content: jsonString }); 
+//     }
+//     // Devuelve json generado con la API
+//     return res.json(parsedData); // Devuelve json generado con la API
+//   } catch (error) {
+//     console.error("Error al generar el Quedu:", error);
+//     return res.status(500).json({ error: "No se pudo generar el Quedu" });
+//   }
+// };
 
 // Crear un Quedu ------------------------------------------------------------------------------
 const createQuedu = async ({ userId, course, name, questions }) => {
