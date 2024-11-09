@@ -8,7 +8,6 @@ const path = require('path');
 
 const { generatePrompt } = require('../controllers/generarPromptController');
 const { extractTextFromPDF } = require('../controllers/textExtraction');
-let nombre = '';
 // ---------------------------------------------- Usuarios ----------------------------------------------
 
 // Configuración de multer para almacenar archivos --------------------------------------------------
@@ -17,8 +16,7 @@ const storage = multer.diskStorage({
     cb(null, 'uploads/');
   },
   filename: (req, file, cb) => {
-    nombre = Date.now() + path.extname(file.originalname)
-    cb(null, nombre);
+    cb(null, Date.now() + path.extname(file.originalname));
   }
 });
 
@@ -115,7 +113,6 @@ const generateQuedu = async (req, res) => {
   try {
 
     const fechaCreacion = new Date().toISOString().split('T')[0];
-
     const { nroPreguntas, nombreQuedu } = req.body;
 
     // Verificar si hay un archivo para procesar
@@ -401,6 +398,5 @@ module.exports = {
   subscribeToCommunity,
   sharePersonalQuedu,
   recibeFile,
-  upload,
-  nombre
+  upload
 };
