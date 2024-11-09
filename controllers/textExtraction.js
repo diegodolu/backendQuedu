@@ -3,6 +3,7 @@ const fs = require('fs');
 const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
 const officeParser = require('officeparser'); 
+const { nombre } = require("./UserController");
 
 /**
  * Extrae el texto de un archivo dependiendo de su tipo y lo almacena en una variable.
@@ -29,30 +30,30 @@ async function extractTextFromPDF(fileBuffer) {
     return data.text;  // Devuelve solo el texto extraído, sin formato ni caracteres especiales.
 }
 
-// Función para extraer texto de documentos Word .docx
-async function extractTextFromDocx(fileBuffer) {
-    const data = await mammoth.extractRawText({ buffer: fileBuffer });  // Usa el buffer
-    return data.value;
-}
+// // Función para extraer texto de documentos Word .docx
+// async function extractTextFromDocx(fileBuffer) {
+//     const data = await mammoth.extractRawText({ buffer: fileBuffer });  // Usa el buffer
+//     return data.value;
+// }
 
-// Función para extraer texto de presentaciones .pptx
-async function extractTextFromPPTX(fileBuffer) {
-    return new Promise((resolve, reject) => {
-        officeParser.parsePptx(fileBuffer, (err, data) => {
-            if (err) {
-                reject(err);
-            } else {
-                const text = data.map(slide => slide.text).join('\n');
-                resolve(text);
-            }
-        });
-    });
-}
+// // Función para extraer texto de presentaciones .pptx
+// async function extractTextFromPPTX(fileBuffer) {
+//     return new Promise((resolve, reject) => {
+//         officeParser.parsePptx(fileBuffer, (err, data) => {
+//             if (err) {
+//                 reject(err);
+//             } else {
+//                 const text = data.map(slide => slide.text).join('\n');
+//                 resolve(text);
+//             }
+//         });
+//     });
+// }
 
 // Ejemplo de uso con un buffer cargado desde un archivo
 (async () => {
     try {
-        const filePath = './uploads/1730994515979.pdf';  // Ruta del archivo PDF en el servidor
+        const filePath = `./uploads/${nombre}`;  // Ruta del archivo PDF en el servidor
         const fileBuffer = fs.readFileSync(filePath);  // Lee el archivo como un buffer
 
         const fileExtension = 'pdf';  // La extensión del archivo, en este caso 'pdf'
