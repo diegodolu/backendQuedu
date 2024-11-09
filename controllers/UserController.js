@@ -5,9 +5,11 @@ const axios = require('axios');
 const bcrypt = require('bcrypt');
 const multer = require('multer');
 const path = require('path');
+const pdfParse = require('pdf-parse');
+const fs = require('fs');
 
 const { generatePrompt } = require('../controllers/generarPromptController');
-const { extractTextFromPDF } = require('../controllers/textExtraction');
+
 // ---------------------------------------------- Usuarios ----------------------------------------------
 
 // Configuración de multer para almacenar archivos --------------------------------------------------
@@ -108,24 +110,27 @@ const getRecentPersonalQuedusByUser = async (userId) => {
   }
 };
 
-// // Generar Quedu con IA -----------------------------------------------------------------------
+// Generar Quedu con IA -----------------------------------------------------------------------
 const generateQuedu = async (req, res) => {
   try {
 
+    const { userId, course, queduName, questions } = req.body;
+    const documentFile = req.file;
+    console.log("Datos recibidos:");
+    console.log("Archivo recibido:", documentFile);
+    console.log("queduName:", queduName);
+    console.log("questions:", questions);
+
+    const filePath = documentFile.path;
+
+    const dataBuffer = await fs.promises.readFile(filePath);
+    const pdfData = await pdfParse(dataBuffer)
+    const extractedText = pdfData.text;
+
+    console.log("Texto extraído del PDF: ", extractedText);
+
     const fechaCreacion = new Date().toISOString().split('T')[0];
-    const { nroPreguntas, nombreQuedu } = req.body;
-
-    // Verificar si hay un archivo para procesar
-    if (!req.file) {
-      return res.status(400).json({ error: "El archivo es obligatorio" });
-    }
-
-    // Extraer texto del archivo subido
-    const filePath = req.file.path; 
-    const textoDeEntrada = await extractTextFromPDF(filePath); 
-
-    // Llama a la función que genera el prompt, aplicando escape a caracteres especiales
-    const generatedPrompt = generatePrompt(textoDeEntrada, nroPreguntas, nombreQuedu, fechaCreacion);
+    const generatedPrompt = generatePrompt(extractedText, questions, queduName, fechaCreacion);
 
     // Llama a la API de OpenAI para generar el Quedu
     const response = await axios.post('https://api.openai.com/v1/chat/completions', {
@@ -196,24 +201,32 @@ const createQuedu = async ({ userId, course, name, questions }) => {
 };
 
 // Añadir la función recibe file ------------------------------------------------------------------------------
-const recibeFile = async (req, res) => {
-  try {
-    const { userId, course, queduName, questions } = req.body;
-    const documentFile = req.file;
-
-    console.log("Datos recibidos:");
-    console.log("userId: ", userId);
-    console.log("course: ", course);
-    console.log("queduName: ", queduName);
-    console.log("questions: ", questions);
-    console.log("Archivo recibido: ", documentFile);
-
-    res.status(200).send({ message: 'Datos recibidos correctamente' });
-  } catch (error) {
-    console.error("Error al crear el Quedu con archivo: ", error);
-    res.status(500).send({ message: "Error al recibir datos" });
-  }
-}
+//const recibeFile = async (req, res) => {
+//  try {
+//    const { userId, course, queduName, questions } = req.body;
+//    const documentFile = req.file;
+//
+//    console.log("Datos recibidos:");
+//    console.log("userId: ", userId);
+//    console.log("course: ", course);
+//    console.log("queduName: ", queduName);
+//    console.log("questions: ", questions);
+//    console.log("Archivo recibido: ", documentFile);
+//
+//    const filePath = documentFile.path;
+//
+//    const dataBuffer = await fs.promises.readFile(filePath);
+//    const pdfData = await pdfParse(dataBuffer)
+//    const extractedText = pdfData.text;
+//
+//    console.log("Texto extraído del PDF: ", extractedText);
+//
+//    res.status(200).send({ message: 'Datos recibidos y texto extraído correctamente', extractedText });
+//  } catch (error) {
+//    console.error("Error al crear el Quedu con archivo: ", error);
+//    res.status(500).send({ message: "Error al recibir datos" });
+//  }
+//}
 
 // Crear un Quedu para Postman ----------------------------------------------------------------
 
@@ -397,6 +410,5 @@ module.exports = {
   createPersonalQuedus,
   subscribeToCommunity,
   sharePersonalQuedu,
-  recibeFile,
   upload
 };

@@ -12,7 +12,7 @@ router.post('/user/course/new', UserController.createCourse);
 router.post('/user/course/quedu/new', UserController.createPersonalQuedus);
 router.post('/user/subscribeTo', UserController.subscribeToCommunity);
 router.post('/user/shareQuedu', UserController.sharePersonalQuedu);
-router.post('/user/quedu/generate', UserController.recibeFile, UserController.generateQuedu);  
-router.post('/user/course/quedu/recibeFile', upload.single('document'), UserController.recibeFile);
+
+router.post('/user/course/quedu/generateQuedu', upload.single('document'), UserController.generateQuedu);
 
 module.exports = router;
