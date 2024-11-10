@@ -3,6 +3,7 @@ const UserController = require('../controllers/UserController');
 const verificarToken = require('../middlewares/authMiddleware');
 
 const router = express.Router();
+const upload = UserController.upload; 
 
 router.get('/users', verificarToken, UserController.getUsers);
 router.get('/user/:id', verificarToken, UserController.getUserById);
@@ -12,6 +13,7 @@ router.post('/user/course/new', verificarToken, UserController.createCourse);
 router.post('/user/course/quedu/new', verificarToken, UserController.createPersonalQuedus);
 router.post('/user/subscribeTo', verificarToken, UserController.subscribeToCommunity);
 router.post('/user/shareQuedu', verificarToken, UserController.sharePersonalQuedu);
-router.post('/user/quedu/generate', verificarToken, UserController.generateQuedu);
+
+router.post('/user/course/quedu/generateQuedu', upload.single('document'), UserController.generateQuedu);
 
 module.exports = router;
