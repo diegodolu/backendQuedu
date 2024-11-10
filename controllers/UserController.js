@@ -4,8 +4,26 @@ const Community = require("../models/Community");
 const axios = require('axios'); 
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const multer = require('multer');
+const path = require('path');
+const pdfParse = require('pdf-parse');
+const fs = require('fs');
+
+const { generatePrompt } = require('../controllers/generarPromptController');
 
 // ---------------------------------------------- Usuarios ----------------------------------------------
+
+// Configuración de multer para almacenar archivos --------------------------------------------------
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage: storage });
 
 // Conseguir todos los usuarios --------------------------------------------------
 const getUsers = async (req, res) => {
@@ -107,15 +125,31 @@ const getRecentPersonalQuedusByUser = async (userId) => {
 // Generar Quedu con IA -----------------------------------------------------------------------
 const generateQuedu = async (req, res) => {
   try {
-    const {prompt} = req.body;
-    if (!prompt) {
-      return res.status(400).json({ error: "El campo 'prompt' es obligatorio" });
-    }
+
+    const { userId, course, queduName, questions } = req.body;
+    const documentFile = req.file;
+    console.log("Datos recibidos:");
+    console.log("Archivo recibido:", documentFile);
+    console.log("queduName:", queduName);
+    console.log("questions:", questions);
+
+    const filePath = documentFile.path;
+
+    const dataBuffer = await fs.promises.readFile(filePath);
+    const pdfData = await pdfParse(dataBuffer)
+    const extractedText = pdfData.text;
+
+    console.log("Texto extraído del PDF: ", extractedText);
+
+    const fechaCreacion = new Date().toISOString().split('T')[0];
+    const generatedPrompt = generatePrompt(extractedText, questions, queduName, fechaCreacion);
+
+    // Llama a la API de OpenAI para generar el Quedu
     const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-      model: "gpt-4o-mini-2024-07-18", // o el modelo que desees utilizar
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 11000, // Ajusta el número de tokens según sea necesario
-      temperature: 0.7, // Ajusta la temperatura según tu necesidad
+      model: "gpt-4o-mini-2024-07-18",
+      messages: [{ role: "user", content: generatedPrompt }],
+      max_tokens: 11000,
+      temperature: 0.7,
     }, {
       headers: {
         'Authorization': `Bearer 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`, // Reemplaza con tu clave de API
@@ -123,15 +157,36 @@ const generateQuedu = async (req, res) => {
       }
     });
 
-    const generatedData = response.data.choices[0].message.content; // Ajusta según la estructura de la respuesta
-    const parsedData = JSON.parse(generatedData);    // Parsear el JSON devuelto por la API
+    console.log("Respuesta de la API:", response.data); 
 
-    return parsedData; // Devuelve el quedu generado por la IA
+    const generatedData = response.data.choices[0].message.content;
+
+    // Limpiar el contenido del formato Markdown
+    const jsonString = generatedData
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
+      .trim();
+
+    console.log('JSON a parsear:', jsonString);
+
+    let parsedData;
+    try {
+      // Parsear el JSON devuelto por la API
+      parsedData = JSON.parse(jsonString);
+    } catch (parseError) {
+      console.error("Error al analizar JSON:", parseError);
+      // Devuelve el contenido limpio sin analizar
+      return res.json({ content: jsonString });
+    }
+
+    // Devuelve el JSON generado con la API
+    return res.json(parsedData);
   } catch (error) {
     console.error("Error al generar el Quedu:", error);
     return res.status(500).json({ error: "No se pudo generar el Quedu" });
   }
 };
+
 
 // Crear un Quedu ------------------------------------------------------------------------------
 const createQuedu = async ({ userId, course, name, questions }) => {
@@ -156,6 +211,34 @@ const createQuedu = async ({ userId, course, name, questions }) => {
     throw new Error("No se pudo crear el Quedu"); // Lanza un error si algo falla
   }
 };
+
+// Añadir la función recibe file ------------------------------------------------------------------------------
+//const recibeFile = async (req, res) => {
+//  try {
+//    const { userId, course, queduName, questions } = req.body;
+//    const documentFile = req.file;
+//
+//    console.log("Datos recibidos:");
+//    console.log("userId: ", userId);
+//    console.log("course: ", course);
+//    console.log("queduName: ", queduName);
+//    console.log("questions: ", questions);
+//    console.log("Archivo recibido: ", documentFile);
+//
+//    const filePath = documentFile.path;
+//
+//    const dataBuffer = await fs.promises.readFile(filePath);
+//    const pdfData = await pdfParse(dataBuffer)
+//    const extractedText = pdfData.text;
+//
+//    console.log("Texto extraído del PDF: ", extractedText);
+//
+//    res.status(200).send({ message: 'Datos recibidos y texto extraído correctamente', extractedText });
+//  } catch (error) {
+//    console.error("Error al crear el Quedu con archivo: ", error);
+//    res.status(500).send({ message: "Error al recibir datos" });
+//  }
+//}
 
 // Crear un Quedu para Postman ----------------------------------------------------------------
 
@@ -338,5 +421,6 @@ module.exports = {
   createCourse,
   createPersonalQuedus,
   subscribeToCommunity,
-  sharePersonalQuedu
+  sharePersonalQuedu,
+  upload
 };
