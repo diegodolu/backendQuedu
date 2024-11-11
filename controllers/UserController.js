@@ -438,6 +438,58 @@ const getLastQuedu = async (req, res) => {
 };
 
 
+// Actualizar un Quedu -----------------------------------------------------------------------
+
+const updateQuedu = async (req, res) => {
+  try {
+    // Desestructurar los datos del cuerpo de la solicitud
+    const { userId, queduId, solved, successPercentaje, attempt } = req.body;
+    console.log('userId:', userId, 'queduId:', queduId);
+
+    // Verificar si el usuario existe
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    // Buscar el personalQuedu dentro del arreglo courses.personalQuedus
+    let courseFound = false;
+    for (const course of user.courses) {
+      const personalQueduIndex = course.personalQuedus.findIndex(
+        (quedu) => quedu._id.toString() === queduId.toString() // Comparar IDs como string
+      );
+
+      if (personalQueduIndex !== -1) {
+        // Encontramos el personalQuedu, actualizamos los campos
+        const personalQuedu = course.personalQuedus[personalQueduIndex];
+        personalQuedu.solved = solved;
+        personalQuedu.successPercentaje = successPercentaje;
+        personalQuedu.attempt = attempt;
+
+        // Marcamos que encontramos el course
+        courseFound = true;
+        break;
+      }
+    }
+
+    if (!courseFound) {
+      return res.status(404).json({ message: 'Quedu no encontrado para este usuario' });
+    }
+
+    // Guardar los cambios
+    await user.save();
+
+    // Enviar respuesta de éxito
+    res.status(200).json({ message: 'Quedu actualizado correctamente', user });
+  } catch (error) {
+    console.error('Error al actualizar el quedu:', error);
+    res.status(500).json({ message: 'Error al actualizar el quedu', error: error.message });
+  }
+};
+
+
+
+
 // Exportar las funciones del controlador
 module.exports = {
   loginUser,
@@ -453,4 +505,5 @@ module.exports = {
   sharePersonalQuedu,
   upload,
   getLastQuedu,
+  updateQuedu,
 };
