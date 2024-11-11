@@ -1,6 +1,9 @@
 const express = require('express');
 const app = express();
+const verificarToken = require('./middlewares/authMiddleware');
+const cors = require('cors');
 
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -11,8 +14,8 @@ var community_routes = require('./routes/community');
 var ranking_routes = require('./routes/ranking');
 
 app.use('/api', user_routes);
-app.use('/api', sharedQuedu_routes);
-app.use('/api', community_routes);
-app.use('/api', ranking_routes);
+app.use('/api', verificarToken, sharedQuedu_routes);
+app.use('/api', verificarToken, community_routes);
+app.use('/api', verificarToken, ranking_routes);
 
 module.exports = app;
