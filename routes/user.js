@@ -7,6 +7,8 @@ const upload = UserController.upload;
 
 router.get('/users', verificarToken, UserController.getUsers);
 router.get('/user/:id', verificarToken, UserController.getUserById);
+router.get('/users/:id/courses', verificarToken, UserController.getCoursesByUserId);
+
 router.post('/user', UserController.createUser);
 router.post('/user/login', UserController.loginUser);
 router.post('/user/course/new', verificarToken, UserController.createCourse);
