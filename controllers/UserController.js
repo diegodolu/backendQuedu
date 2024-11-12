@@ -7,20 +7,22 @@ const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const path = require('path');
 const pdfParse = require('pdf-parse');
+const mammoth = require('mammoth');
+const { extractTextFromPptx } = require('./textExtraction');
 const fs = require('fs');
 
-const { generatePrompt } = require('../controllers/generarPromptController');
+const { generatePrompt } = require("../controllers/generarPromptController");
 
 // ---------------------------------------------- Usuarios ----------------------------------------------
 
 // Configuración de multer para almacenar archivos --------------------------------------------------
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/');
+    cb(null, "uploads/");
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname));
-  }
+  },
 });
 
 const upload = multer({ storage: storage });
@@ -34,7 +36,7 @@ const getUsers = async (req, res) => {
   } catch (err) {
     res.status(500).send({ message: "Error en la petición" });
   }
-}
+};
 
 // Conseguir datos de un usuario en específico -----------------------------------
 const getUserById = async (req, res) => {
@@ -53,7 +55,7 @@ const createUser = async (req, res) => {
   try {
     const user = new User();
 
-    const saltRounds = 10;  // Número de rondas para generar el hash
+    const saltRounds = 10; // Número de rondas para generar el hash
     const hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
 
     user.username = req.body.username;
@@ -81,22 +83,17 @@ const loginUser = async (req, res) => {
       return res.status(401).send({ message: "Contraseña incorrecta" });
     }
 
-
     const token = jwt.sign(
       { _id: user._id, username: user.username },
       process.env.JWT_SECRET,
       { algorithm: 'HS256', expiresIn: '1h' }
     );
 
-
-
-
     res.status(200).send({ message: "Inicio de sesión exitoso", user, token });
-
   } catch (error) {
     res.status(500).send({ message: `Error al iniciar sesión ${error}` });
   }
-}
+};
 
 // ---------------------------------------------- Quedus ----------------------------------------------
 
@@ -107,8 +104,8 @@ const getRecentPersonalQuedusByUser = async (userId) => {
       "courses._id": 1,
       "courses.name": 1,
       "courses.personalQuedus": { $slice: -4 },
-      "courses.personalQuedus.name": 1,  
-      "courses.personalQuedus.createdAt": 1
+      "courses.personalQuedus.name": 1,
+      "courses.personalQuedus.createdAt": 1,
     });
 
     if (!user) {
@@ -125,49 +122,78 @@ const getRecentPersonalQuedusByUser = async (userId) => {
 // Generar Quedu con IA -----------------------------------------------------------------------
 const generateQuedu = async (req, res) => {
   try {
-
     const { userId, course, queduName, questions } = req.body;
     const documentFile = req.file;
+
+    if (!documentFile) {
+      return res.status(400).json({ error: 'No se recibió ningún archivo' });
+    }
+
     console.log("Datos recibidos:");
     console.log("Archivo recibido:", documentFile);
     console.log("queduName:", queduName);
     console.log("questions:", questions);
 
     const filePath = documentFile.path;
+    const fileExtension = path.extname(filePath).toLowerCase();
+    let extractedText = "";
 
-    const dataBuffer = await fs.promises.readFile(filePath);
-    const pdfData = await pdfParse(dataBuffer)
-    const extractedText = pdfData.text;
+    switch (fileExtension) {
+      case '.pdf':
+        const dataBuffer = await fs.promises.readFile(filePath);
+        const pdfData = await pdfParse(dataBuffer)
+        extractedText = pdfData.text;
+        break;
+      case '.docx':
+        const docxData = await mammoth.extractRawText({ path: filePath });
+        extractedText = docxData.value;
+        break;
+      case '.ppt':
+      case '.pptx':
+        extractedText = await extractTextFromPptx(filePath);
+        break;
+      default:
+        return res.status(400).json({ error: "Tipo de archivo no soportado" });
+    }
 
-    console.log("Texto extraído del PDF: ", extractedText);
+    console.log("Texto extraído del archivo: ", extractedText);
 
-    const fechaCreacion = new Date().toISOString().split('T')[0];
-    const generatedPrompt = generatePrompt(extractedText, questions, queduName, fechaCreacion);
+    const fechaCreacion = new Date().toISOString().split("T")[0];
+    const generatedPrompt = generatePrompt(
+      extractedText,
+      questions,
+      queduName,
+      fechaCreacion
+    );
 
     // Llama a la API de OpenAI para generar el Quedu
-    const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-      model: "gpt-4o-mini-2024-07-18",
-      messages: [{ role: "user", content: generatedPrompt }],
-      max_tokens: 11000,
-      temperature: 0.7,
-    }, {
-      headers: {
-        'Authorization': `Bearer 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`, // Reemplaza con tu clave de API
-        'Content-Type': 'application/json',
+    const response = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        model: "gpt-4o-mini-2024-07-18",
+        messages: [{ role: "user", content: generatedPrompt }],
+        max_tokens: 11000,
+        temperature: 0.7,
+      },
+      {
+        headers: {
+          Authorization: `Bearer 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`, // Reemplaza con tu clave de API
+          "Content-Type": "application/json",
+        },
       }
-    });
+    );
 
-    console.log("Respuesta de la API:", response.data); 
+    console.log("Respuesta de la API:", response.data);
 
     const generatedData = response.data.choices[0].message.content;
 
     // Limpiar el contenido del formato Markdown
     const jsonString = generatedData
-      .replace(/```json/g, '')
-      .replace(/```/g, '')
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
       .trim();
 
-    console.log('JSON a parsear:', jsonString);
+    console.log("JSON a parsear:", jsonString);
 
     let parsedData;
     try {
@@ -186,7 +212,6 @@ const generateQuedu = async (req, res) => {
     return res.status(500).json({ error: "No se pudo generar el Quedu" });
   }
 };
-
 
 // Crear un Quedu ------------------------------------------------------------------------------
 const createQuedu = async ({ userId, course, name, questions }) => {
@@ -247,7 +272,7 @@ const createPersonalQuedus = async (req, res) => {
     const { userId, courseName, quedus } = req.body;
 
     // Valida y ajusta el successPercentaje basado en las respuestas correctas
-    const updatedQuedus = quedus.map(quedu => {
+    const updatedQuedus = quedus.map((quedu) => {
       // Validar que haya al menos 2 preguntas
       if (quedu.questions.length < 2) {
         throw new Error("Cada quedu debe tener al menos 2 preguntas.");
@@ -256,7 +281,7 @@ const createPersonalQuedus = async (req, res) => {
       quedu.attempt = 1;
       quedu.solved = true;
 
-      quedu.questions.forEach(question => {
+      quedu.questions.forEach((question) => {
         // Asegurarse de que cada pregunta tenga al menos 5 respuestas
         if (question.answers.length < 5) {
           throw new Error("Cada pregunta debe tener al menos 5 respuestas.");
@@ -265,9 +290,14 @@ const createPersonalQuedus = async (req, res) => {
 
       // Calcular el porcentaje de éxito en función de las respuestas correctas
       const totalQuestions = quedu.questions.length;
-      const correctAnswers = quedu.questions.flatMap(q => q.answers).filter(a => a.correct).length;
+      const correctAnswers = quedu.questions
+        .flatMap((q) => q.answers)
+        .filter((a) => a.correct).length;
       const percentageSteps = [0, 20, 40, 60, 80, 100]; // Posibles valores de successPercentaje
-      const successPercentage = percentageSteps[Math.floor((correctAnswers / (totalQuestions * 5)) * 5)];
+      const successPercentage =
+        percentageSteps[
+          Math.floor((correctAnswers / (totalQuestions * 5)) * 5)
+        ];
       quedu.successPercentaje = successPercentage;
 
       return quedu;
@@ -284,12 +314,15 @@ const createPersonalQuedus = async (req, res) => {
       return res.status(404).send({ message: "Usuario o curso no encontrado" });
     }
 
-    res.status(201).send({ message: "Quedus creados exitosamente", updatedUser });
+    res
+      .status(201)
+      .send({ message: "Quedus creados exitosamente", updatedUser });
   } catch (error) {
-    res.status(500).send({ message: `Error al crear quedus, ${error.message}` });
+    res
+      .status(500)
+      .send({ message: `Error al crear quedus, ${error.message}` });
   }
 };
-
 
 // Crea un Curso -----------------------------------------------------------------
 const createCourse = async (req, res) => {
@@ -340,7 +373,6 @@ const getCoursesByUserId = async (req, res) => {
   }
 };
 
-
 // ---------------------------------------------- Sucribirse a Comunidad ----------------------------------------------
 
 // Suscribirse a una comunidad ---------------------------------------------------------
@@ -353,14 +385,12 @@ const subscribeToCommunity = async (req, res) => {
     );
 
     res.status(201).send({ user });
+  } catch (error) {
+    res
+      .status(500)
+      .send({ message: `Error al suscribirse a la comunidad, ${error}` });
   }
-  catch (error) {
-    res.status(500).send({ message: `Error al suscribirse a la comunidad, ${error}` });
-  }
-}
-
-
-
+};
 
 // ---------------------------------------------- Compartir Quedus ----------------------------------------------
 
@@ -429,13 +459,91 @@ const sharePersonalQuedu = async (req, res) => {
     await user.save();
 
     // Respuesta exitosa
-    return res.status(200).json({ message: "personalQuedu compartido exitosamente" });
-
+    return res
+      .status(200)
+      .json({ message: "personalQuedu compartido exitosamente" });
   } catch (error) {
     console.error("Error compartiendo el personalQuedu:", error.message);
-    return res.status(500).json({ message: "Error compartiendo el personalQuedu" });
+    return res
+      .status(500)
+      .json({ message: "Error compartiendo el personalQuedu" });
   }
 };
+
+const getLastQuedu = async (req, res) => {
+  const { userId } = req.body;
+  try {
+    const user = await User.findById(userId).select("courses.personalQuedus");
+
+    if (!user || !user.courses) {
+      return res.status(404).json({ error: "Usuario o cursos no encontrados." });
+    }
+
+    // Extrae todos los personalQuedus de todos los cursos
+    const allPersonalQuedus = user.courses.flatMap(
+      (course) => course.personalQuedus
+    );
+
+    // Ordena los personalQuedus por createdAt en orden descendente y toma el primero
+    const lastPersonalQuedu = allPersonalQuedus
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+    return res.json(lastPersonalQuedu); 
+  } catch (error) {
+    console.error("Error al obtener el último personalQuedu:", error);
+    res.status(500).json({ error: "Error al obtener el último personalQuedu." });
+  }
+};
+
+
+// Actualizar un Quedu -----------------------------------------------------------------------
+
+const updateQuedu = async (req, res) => {
+  try {
+    // Desestructurar los datos del cuerpo de la solicitud
+    const { userId, queduId, solved, successPercentaje, attempt } = req.body;
+    console.log('userId:', userId, 'queduId:', queduId);
+
+    // Verificar si el usuario existe
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    // Buscar el personalQuedu dentro del arreglo courses.personalQuedus
+    let courseFound = false;
+    for (const course of user.courses) {
+      const personalQueduIndex = course.personalQuedus.findIndex(
+        (quedu) => quedu._id.toString() === queduId.toString() // Comparar IDs como string
+      );
+
+      if (personalQueduIndex !== -1) {
+        // Encontramos el personalQuedu, actualizamos los campos
+        const personalQuedu = course.personalQuedus[personalQueduIndex];
+        personalQuedu.solved = solved;
+        personalQuedu.successPercentaje = successPercentaje;
+        personalQuedu.attempt = attempt;
+
+        // Marcamos que encontramos el course
+        courseFound = true;
+        break;
+      }
+    }
+
+    if (!courseFound) {
+      return res.status(404).json({ message: 'Quedu no encontrado para este usuario' });
+    }
+
+    // Guardar los cambios
+    await user.save();
+
+    // Enviar respuesta de éxito
+    res.status(200).json({ message: 'Quedu actualizado correctamente', user });
+  } catch (error) {
+    console.error('Error al actualizar el quedu:', error);
+    res.status(500).json({ message: 'Error al actualizar el quedu', error: error.message });
+  }
+};
+
 
 
 
@@ -453,5 +561,7 @@ module.exports = {
   subscribeToCommunity,
   sharePersonalQuedu,
   upload,
-  getCoursesByUserId
+  getCoursesByUserId,
+  getLastQuedu,
+  updateQuedu
 };
