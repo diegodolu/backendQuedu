@@ -10,6 +10,7 @@ const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
 const { extractTextFromPptx } = require('./textExtraction');
 const fs = require('fs');
+const mongoose = require("mongoose");
 
 const { generatePrompt } = require("../controllers/generarPromptController");
 
@@ -98,26 +99,46 @@ const loginUser = async (req, res) => {
 // ---------------------------------------------- Quedus ----------------------------------------------
 
 // Conseguir los 4 quedus más recientes de un usuario en específico ----------------------------
-const getRecentPersonalQuedusByUser = async (userId) => {
+const getRecentPersonalQuedusByUser = async (req, res) => {
   try {
+    const userId = req.params.id;
+
+    // Validar si el `userId` tiene el formato correcto
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "ID de usuario no válido" });
+    }
+
+    // Ya no es necesario invocar `new` al crear el ObjectId
     const user = await User.findById(userId, {
       "courses._id": 1,
       "courses.name": 1,
-      "courses.personalQuedus": { $slice: -4 },
-      "courses.personalQuedus.name": 1,
-      "courses.personalQuedus.createdAt": 1,
+      "courses.personalQuedus": 1, // Obtener todo el array de personalQuedus
     });
 
+
     if (!user) {
-      return { message: "Usuario no encontrado" };
+      return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
-    return user.courses;
+    // Procesar los datos para obtener solo los últimos 4 elementos de personalQuedus y los campos necesarios
+    const courses = user.courses.map(course => ({
+      _id: course._id,
+      name: course.name,
+      personalQuedus: course.personalQuedus.slice(-4).map(quedu => ({
+        name: quedu.name,
+        createdAt: quedu.createdAt,
+      }))
+    }));
+
+    console.log("courses:", JSON.stringify(courses, null, 2));
+
+    return res.status(200).json(courses)
   } catch (err) {
     console.error("Error al obtener los cursos y tests:", err);
-    return { message: "Error en la consulta" };
+    return res.status(500).json({ message: "Error en la consulta" });
   }
 };
+
 
 // Generar Quedu con IA -----------------------------------------------------------------------
 const generateQuedu = async (req, res) => {
