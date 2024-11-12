@@ -156,11 +156,6 @@ const generateQuedu = async (req, res) => {
         return res.status(400).json({ error: "Tipo de archivo no soportado" });
     }
 
-    const dataBuffer = await fs.promises.readFile(filePath);
-    const pdfData = await pdfParse(dataBuffer);
-    const extractedText = pdfData.text;
-
-
     console.log("Texto extraído del archivo: ", extractedText);
 
     const fechaCreacion = new Date().toISOString().split("T")[0];
