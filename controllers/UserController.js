@@ -1,13 +1,15 @@
 const User = require("../models/User");
 const SharedQuedu = require("../models/SharedQuedu");
 const Community = require("../models/Community");
-const axios = require("axios");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const multer = require("multer");
-const path = require("path");
-const pdfParse = require("pdf-parse");
-const fs = require("fs");
+const axios = require('axios'); 
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const multer = require('multer');
+const path = require('path');
+const pdfParse = require('pdf-parse');
+const mammoth = require('mammoth');
+const { extractTextFromPptx } = require('./textExtraction');
+const fs = require('fs');
 
 const { generatePrompt } = require("../controllers/generarPromptController");
 
@@ -122,18 +124,44 @@ const generateQuedu = async (req, res) => {
   try {
     const { userId, course, queduName, questions } = req.body;
     const documentFile = req.file;
+
+    if (!documentFile) {
+      return res.status(400).json({ error: 'No se recibió ningún archivo' });
+    }
+
     console.log("Datos recibidos:");
     console.log("Archivo recibido:", documentFile);
     console.log("queduName:", queduName);
     console.log("questions:", questions);
 
     const filePath = documentFile.path;
+    const fileExtension = path.extname(filePath).toLowerCase();
+    let extractedText = "";
+
+    switch (fileExtension) {
+      case '.pdf':
+        const dataBuffer = await fs.promises.readFile(filePath);
+        const pdfData = await pdfParse(dataBuffer)
+        extractedText = pdfData.text;
+        break;
+      case '.docx':
+        const docxData = await mammoth.extractRawText({ path: filePath });
+        extractedText = docxData.value;
+        break;
+      case '.ppt':
+      case '.pptx':
+        extractedText = await extractTextFromPptx(filePath);
+        break;
+      default:
+        return res.status(400).json({ error: "Tipo de archivo no soportado" });
+    }
 
     const dataBuffer = await fs.promises.readFile(filePath);
     const pdfData = await pdfParse(dataBuffer);
     const extractedText = pdfData.text;
 
-    console.log("Texto extraído del PDF: ", extractedText);
+
+    console.log("Texto extraído del archivo: ", extractedText);
 
     const fechaCreacion = new Date().toISOString().split("T")[0];
     const generatedPrompt = generatePrompt(
