@@ -84,9 +84,9 @@ const loginUser = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, username: user.username },
-      process.env.JWT_SECRET, // clave secreta segura para firmar el token
-      { algorithm: "HS256", expiresIn: "1h" } // token expira en 1 hora
+      { _id: user._id, username: user.username },
+      process.env.JWT_SECRET,
+      { algorithm: 'HS256', expiresIn: '1h' }
     );
 
     res.status(200).send({ message: "Inicio de sesión exitoso", user, token });
@@ -324,18 +324,52 @@ const createPersonalQuedus = async (req, res) => {
   }
 };
 
-// Crea un Curso ------------------------------------------------------------------------------
+// Crea un Curso -----------------------------------------------------------------
 const createCourse = async (req, res) => {
   try {
-    const { userId, courseName } = req.body;
-    const course = await User.updateOne(
-      { _id: userId },
-      { $push: { courses: { name: courseName } } }
-    );
+    const { courseName } = req.body;
 
-    res.status(201).send({ course });
+    // Usa el ID del usuario autenticado desde el middleware
+    const userId = req.usuario._id;
+    // console.log("User ID obtenido del token:", userId);
+
+    // Verifica si el usuario existe
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+    }
+
+    // Verifica si ya existe un curso con el mismo nombre para este usuario
+    const courseExists = user.courses.some(course => course.name === courseName);
+    if (courseExists) {
+      return res.status(400).json({ mensaje: 'Ya existe un curso con ese nombre' });
+    }
+
+    // Agrega el nuevo curso
+    user.courses.push({ name: courseName });
+    await user.save();
+
+    res.status(201).json({ mensaje: 'Curso creado exitosamente', course: user.courses });
   } catch (error) {
-    res.status(500).send({ message: `Error al crear el curso, ${error}` });
+    console.error("Error al crear el curso:", error);
+    res.status(500).json({ mensaje: `Error al crear el curso: ${error.message}` });
+  }
+};
+
+// Obtener cursos por usuario ----------------------------------------------
+const getCoursesByUserId = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const user = await User.findById(userId, { courses: 1 });
+    
+    if (!user) {
+      return res.status(404).send({ message: "Usuario no encontrado" });
+    }
+
+    res.status(200).send({ courses: user.courses });
+  } catch (error) {
+    console.error("Error al obtener los cursos:", error);
+    res.status(500).send({ message: "Error al obtener los cursos" });
   }
 };
 
@@ -527,6 +561,7 @@ module.exports = {
   subscribeToCommunity,
   sharePersonalQuedu,
   upload,
+  getCoursesByUserId,
   getLastQuedu,
-  updateQuedu,
+  updateQuedu
 };
