@@ -323,6 +323,24 @@ const createCourse = async (req, res) => {
   }
 };
 
+// Obtener cursos por usuario ----------------------------------------------
+const getCoursesByUserId = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const user = await User.findById(userId, { courses: 1 });
+    
+    if (!user) {
+      return res.status(404).send({ message: "Usuario no encontrado" });
+    }
+
+    res.status(200).send({ courses: user.courses });
+  } catch (error) {
+    console.error("Error al obtener los cursos:", error);
+    res.status(500).send({ message: "Error al obtener los cursos" });
+  }
+};
+
+
 // ---------------------------------------------- Sucribirse a Comunidad ----------------------------------------------
 
 // Suscribirse a una comunidad ---------------------------------------------------------
@@ -434,5 +452,6 @@ module.exports = {
   createPersonalQuedus,
   subscribeToCommunity,
   sharePersonalQuedu,
-  upload
+  upload,
+  getCoursesByUserId
 };
