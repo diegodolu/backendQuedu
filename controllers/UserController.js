@@ -62,8 +62,12 @@ const createUser = async (req, res) => {
     user.password = hashedPassword;
     user.email = req.body.email;
     await user.save();
+    // debug
+    console.log("Creacion de usuario exitoso: ", user);
     res.status(201).send({ user });
   } catch (err) {
+    // debug
+    console.error("Error al crear usuario: ", err.message);
     res.status(500).send({ message: "Error al guardar el usuario" });
   }
 };
@@ -88,9 +92,11 @@ const loginUser = async (req, res) => {
       process.env.JWT_SECRET,
       { algorithm: 'HS256', expiresIn: '1h' }
     );
-
+    // debug
+    console.log("Inicio de sesion exitoso: ", user);
     res.status(200).send({ message: "Inicio de sesión exitoso", user, token });
   } catch (error) {
+    console.error("Error en iniciar sesion: ", err.message);
     res.status(500).send({ message: `Error al iniciar sesión ${error}` });
   }
 };
@@ -122,7 +128,7 @@ const getRecentPersonalQuedusByUser = async (userId) => {
 // Generar Quedu con IA -----------------------------------------------------------------------
 const generateQuedu = async (req, res) => {
   try {
-    const { userId, course, queduName, questions } = req.body;
+    const { userId, courseName, queduName, questions } = req.body;
     const documentFile = req.file;
 
     if (!documentFile) {
@@ -133,6 +139,7 @@ const generateQuedu = async (req, res) => {
     console.log("Archivo recibido:", documentFile);
     console.log("queduName:", queduName);
     console.log("questions:", questions);
+    console.log("courseName: ", courseName)
 
     const filePath = documentFile.path;
     const fileExtension = path.extname(filePath).toLowerCase();
@@ -204,10 +211,24 @@ const generateQuedu = async (req, res) => {
       // Devuelve el contenido limpio sin analizar
       return res.json({ content: jsonString });
     }
+    // debug
+    console.log("Parseo exitoso: ", parsedData);
 
-    // Devuelve el JSON generado con la API
-    return res.json(parsedData);
+    // modificacion para agregar quedus a usuarios - kana
+    // envio final de la api
+    const envioFinal = {
+      userId: userId,
+      courseName: 'Lenguaje',
+      quedus: [
+        parsedData
+      ]
+    }
+    console.log("Envio final del json", envioFinal);
+
+    // Devuelve el JSON con estructura final para insercion
+    return res.json(envioFinal);
   } catch (error) {
+    // debug
     console.error("Error al generar el Quedu:", error);
     return res.status(500).json({ error: "No se pudo generar el Quedu" });
   }
@@ -222,7 +243,7 @@ const createQuedu = async ({ userId, course, name, questions }) => {
       successPercentaje: 100, // O un valor que determines
       attempt: 1, // O el número de intentos
       questions,
-      solvedBy: [userId], // Opcional, dependiendo de tu lógica
+      solved: false, // Opcional, dependiendo de tu lógica
     };
 
     const quedu = await User.updateOne(
@@ -232,6 +253,7 @@ const createQuedu = async ({ userId, course, name, questions }) => {
 
     return quedu; // Devuelve el quedu creado
   } catch (error) {
+    // debug
     console.error("Error al crear el Quedu:", error);
     throw new Error("No se pudo crear el Quedu"); // Lanza un error si algo falla
   }
@@ -274,8 +296,8 @@ const createPersonalQuedus = async (req, res) => {
     // Valida y ajusta el successPercentaje basado en las respuestas correctas
     const updatedQuedus = quedus.map((quedu) => {
       // Validar que haya al menos 2 preguntas
-      if (quedu.questions.length < 2) {
-        throw new Error("Cada quedu debe tener al menos 2 preguntas.");
+      if (quedu.questions.length < 1) {
+        throw new Error("Cada quedu debe tener al menos 1 pregunta.");
       }
 
       quedu.attempt = 1;
@@ -283,8 +305,8 @@ const createPersonalQuedus = async (req, res) => {
 
       quedu.questions.forEach((question) => {
         // Asegurarse de que cada pregunta tenga al menos 5 respuestas
-        if (question.answers.length < 5) {
-          throw new Error("Cada pregunta debe tener al menos 5 respuestas.");
+        if (question.answers.length < 1) {
+          throw new Error("Cada pregunta debe tener al menos 1 respuesta.");
         }
       });
 
@@ -313,11 +335,15 @@ const createPersonalQuedus = async (req, res) => {
     if (updatedUser.nModified === 0) {
       return res.status(404).send({ message: "Usuario o curso no encontrado" });
     }
-
+    // debug
+    console.log("Quedu creado y agregado al usuario correctamente");
+    console.log("usuario actualizado: ", updatedUser);
     res
       .status(201)
       .send({ message: "Quedus creados exitosamente", updatedUser });
   } catch (error) {
+    // debug
+    console.error("Error al guardar el quedu: ", error.message);
     res
       .status(500)
       .send({ message: `Error al crear quedus, ${error.message}` });
