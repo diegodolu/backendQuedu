@@ -300,8 +300,8 @@ const createPersonalQuedus = async (req, res) => {
         throw new Error("Cada quedu debe tener al menos 1 pregunta.");
       }
 
-      quedu.attempt = 1;
-      quedu.solved = true;
+      quedu.attempt = 0;
+      quedu.solved = false;
 
       quedu.questions.forEach((question) => {
         // Asegurarse de que cada pregunta tenga al menos 5 respuestas
