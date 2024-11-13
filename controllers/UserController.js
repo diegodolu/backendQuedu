@@ -107,18 +107,9 @@ const loginUser = async (req, res) => {
 
 // Conseguir los 4 quedus más recientes de un usuario en específico ----------------------------
 const getRecentPersonalQuedusByUser = async (req, res) => {
-const getRecentPersonalQuedusByUser = async (req, res) => {
   try {
     const userId = req.params.id;
     console.log(req.params);
-
-    // Validar si el `userId` tiene el formato correcto
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ message: "ID de usuario no válido" });
-    }
-
-    // Ya no es necesario invocar `new` al crear el ObjectId
-    const userId = req.params.id;
 
     // Validar si el `userId` tiene el formato correcto
     if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -140,19 +131,6 @@ const getRecentPersonalQuedusByUser = async (req, res) => {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
-    // Procesar los datos para obtener solo los últimos 4 elementos de personalQuedus y los campos necesarios
-    const courses = user.courses.map(course => ({
-      _id: course._id,
-      name: course.name,
-      personalQuedus: course.personalQuedus.slice(-4).map(quedu => ({
-        name: quedu.name,
-        createdAt: quedu.createdAt,
-      }))
-    }));
-
-    console.log("courses:", JSON.stringify(courses, null, 2));
-
-    return res.status(200).json(courses)
     // Procesar los datos para obtener solo los últimos 4 elementos de personalQuedus y los campos necesarios
     const courses = user.courses.map(course => ({
       _id: course._id,
