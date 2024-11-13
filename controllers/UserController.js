@@ -191,7 +191,7 @@ const generateQuedu = async (req, res) => {
 
     console.log("Texto extraído del archivo: ", extractedText);
 
-    const fechaCreacion = new Date().toISOString().split("T")[0];
+    const fechaCreacion = new Date().toISOString();
     const generatedPrompt = generatePrompt(
       extractedText,
       questions,
