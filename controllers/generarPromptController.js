@@ -16,7 +16,7 @@ function generatePrompt(textoDeEntrada, nroPreguntas, nombreQuedu, fechaCreacion
      "successPercentaje": 0,
      "attempt": 0,
      "createdAt": "${fechaCreacion}",
-     "solvedBy": [],
+     "solved": false,
      "questions": [
        {
          "question": "Texto de la pregunta",
