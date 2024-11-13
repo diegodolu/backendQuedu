@@ -218,7 +218,7 @@ const generateQuedu = async (req, res) => {
     // envio final de la api
     const envioFinal = {
       userId: userId,
-      courseName: 'Lenguaje',
+      courseName: courseName,
       quedus: [
         parsedData
       ]
