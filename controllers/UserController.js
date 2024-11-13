@@ -11,7 +11,6 @@ const mammoth = require('mammoth');
 const { extractTextFromPptx } = require('./textExtraction');
 const fs = require('fs');
 const mongoose = require("mongoose");
-const mongoose = require('mongoose');
 
 const { generatePrompt } = require("../controllers/generarPromptController");
 
