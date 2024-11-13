@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 
 // Middleware para verificar el JWT
 function verificarToken(req, res, next) {
-  const token = req.headers['authorization']?.split(' ')[1]; // Token en el encabezado Authorization
+  const token = req.headers['authorization']?.split(' ')[1] || req.headers['x-access-token']?.split(' ')[1]; // Token en el encabezado Authorization
 
   if (!token) {
     return res.status(403).json({ mensaje: 'Token no proporcionado' });
