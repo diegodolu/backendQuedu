@@ -550,6 +550,7 @@ const getLastQuedu = async (req, res) => {
 // Actualizar un Quedu -----------------------------------------------------------------------
 
 const updateQuedu = async (req, res) => {
+  console.log("************* Acutalizando quedu *****************");
   try {
     // Desestructurar los datos del cuerpo de la solicitud
     const { userId, queduId, solved, successPercentaje, attempt } = req.body;
@@ -560,28 +561,30 @@ const updateQuedu = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
+    console.log("Usuario encontrado: ", user);
 
     // Buscar el personalQuedu dentro del arreglo courses.personalQuedus
-    let courseFound = false;
+    let queduFound = false;
+    console.log("***************** Iniciando iteracion de cursos *****************")
     for (const course of user.courses) {
-      const personalQueduIndex = course.personalQuedus.findIndex(
-        (quedu) => quedu._id.toString() === queduId.toString() // Comparar IDs como string
-      );
-
-      if (personalQueduIndex !== -1) {
-        // Encontramos el personalQuedu, actualizamos los campos
-        const personalQuedu = course.personalQuedus[personalQueduIndex];
-        personalQuedu.solved = solved;
-        personalQuedu.successPercentaje = successPercentaje;
-        personalQuedu.attempt = attempt;
-
-        // Marcamos que encontramos el course
-        courseFound = true;
+      console.log("Curso: ", course);
+      for (const quedu of course.personalQuedus){
+        console.log("iterando quedus: ", quedu);
+        if (quedu.id === queduId.toString()){
+          console.log("****************** Quedu encontrado!!!!!!!!!!!!\n\n\n\n\n");
+          quedu.solved = solved;
+          quedu.successPercentaje = successPercentaje;
+          quedu.attempt = attempt;
+          queduFound = true;
+          break;
+        }
+      }
+      if (queduFound){
         break;
       }
     }
 
-    if (!courseFound) {
+    if (!queduFound) {
       return res.status(404).json({ message: 'Quedu no encontrado para este usuario' });
     }
 
@@ -589,6 +592,7 @@ const updateQuedu = async (req, res) => {
     await user.save();
 
     // Enviar respuesta de éxito
+    console.log("quedu actualizado!")
     res.status(200).json({ message: 'Quedu actualizado correctamente', user });
   } catch (error) {
     console.error('Error al actualizar el quedu:', error);
@@ -596,7 +600,68 @@ const updateQuedu = async (req, res) => {
   }
 };
 
+const deleteCourse = async (req, res) => {
+  try {
+    
+    const {userId, courseId} = req.body;
+    const result = await User.updateOne(
+      { _id: userId }, // Buscar el usuario por ID
+      { $pull: { courses: { _id: courseId } } } // Eliminar el curso embebido
+    );
 
+    if (result.modifiedCount > 0) {
+      console.log("Curso eliminado correctamente.");
+      res.status(200).json({ message: 'Curso eliminado', result });
+    } else {
+      console.log("No se encontró el curso para eliminar.");
+      res.status(404).json({ message: 'Curso no encontrado', error: error.message });
+
+    }
+    
+  } catch (error) {
+    console.error("Error al eliminar el curso:", error);
+    res.status(500).json({ message: 'Error servidor', error: error.message });
+  }
+};
+
+const updateCourse = async (req, res) => {
+  try {
+    // Extraer datos del cuerpo de la solicitud
+    const { userId, courseId, courseName } = req.body;
+
+    // Validar que todos los campos requeridos estén presentes
+    if (!userId || !courseId || !courseName) {
+      return res.status(400).json({
+        message: "Faltan datos necesarios. Asegúrate de enviar userId, courseId y courseName.",
+      });
+    }
+
+    // Realizar la actualización del curso
+    const result = await User.updateOne(
+      { _id: userId, "courses._id": courseId }, // Filtro para buscar usuario y curso
+      { $set: { "courses.$.name": courseName } } // Actualizar el nombre del curso
+    );
+
+    // Verificar si se actualizó algún documento
+    if (result.modifiedCount > 0) {
+      console.log("Curso actualizado correctamente:", result);
+      return res.status(200).json({
+        message: "Nombre del curso actualizado correctamente.",
+      });
+    } else {
+      console.log("Curso no encontrado:", result);
+      return res.status(404).json({
+        message: "Usuario o curso no encontrado. Verifica los IDs proporcionados.",
+      });
+    }
+  } catch (error) {
+    console.error("Error al actualizar el nombre del curso:", error);
+    return res.status(500).json({
+      message: "Error al actualizar el nombre del curso.",
+      error: error.message,
+    });
+  }
+};
 
 
 // Exportar las funciones del controlador
@@ -615,5 +680,7 @@ module.exports = {
   upload,
   getCoursesByUserId,
   getLastQuedu,
-  updateQuedu
+  updateQuedu,
+  deleteCourse,
+  updateCourse
 };
