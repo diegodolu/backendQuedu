@@ -622,7 +622,46 @@ const deleteCourse = async (req, res) => {
     console.error("Error al eliminar el curso:", error);
     res.status(500).json({ message: 'Error servidor', error: error.message });
   }
-}
+};
+
+const updateCourse = async (req, res) => {
+  try {
+    // Extraer datos del cuerpo de la solicitud
+    const { userId, courseId, courseName } = req.body;
+
+    // Validar que todos los campos requeridos estén presentes
+    if (!userId || !courseId || !courseName) {
+      return res.status(400).json({
+        message: "Faltan datos necesarios. Asegúrate de enviar userId, courseId y courseName.",
+      });
+    }
+
+    // Realizar la actualización del curso
+    const result = await User.updateOne(
+      { _id: userId, "courses._id": courseId }, // Filtro para buscar usuario y curso
+      { $set: { "courses.$.name": courseName } } // Actualizar el nombre del curso
+    );
+
+    // Verificar si se actualizó algún documento
+    if (result.modifiedCount > 0) {
+      console.log("Curso actualizado correctamente:", result);
+      return res.status(200).json({
+        message: "Nombre del curso actualizado correctamente.",
+      });
+    } else {
+      console.log("Curso no encontrado:", result);
+      return res.status(404).json({
+        message: "Usuario o curso no encontrado. Verifica los IDs proporcionados.",
+      });
+    }
+  } catch (error) {
+    console.error("Error al actualizar el nombre del curso:", error);
+    return res.status(500).json({
+      message: "Error al actualizar el nombre del curso.",
+      error: error.message,
+    });
+  }
+};
 
 
 // Exportar las funciones del controlador
@@ -642,5 +681,6 @@ module.exports = {
   getCoursesByUserId,
   getLastQuedu,
   updateQuedu,
-  deleteCourse
+  deleteCourse,
+  updateCourse
 };
