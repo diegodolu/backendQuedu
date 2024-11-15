@@ -600,6 +600,30 @@ const updateQuedu = async (req, res) => {
   }
 };
 
+const deleteCourse = async (req, res) => {
+  try {
+    
+    const {userId, courseId} = req.body;
+    const result = await User.updateOne(
+      { _id: userId }, // Buscar el usuario por ID
+      { $pull: { courses: { _id: courseId } } } // Eliminar el curso embebido
+    );
+
+    if (result.modifiedCount > 0) {
+      console.log("Curso eliminado correctamente.");
+      res.status(200).json({ message: 'Curso eliminado', result });
+    } else {
+      console.log("No se encontró el curso para eliminar.");
+      res.status(404).json({ message: 'Curso no encontrado', error: error.message });
+
+    }
+    
+  } catch (error) {
+    console.error("Error al eliminar el curso:", error);
+    res.status(500).json({ message: 'Error servidor', error: error.message });
+  }
+}
+
 
 // Exportar las funciones del controlador
 module.exports = {
@@ -617,5 +641,6 @@ module.exports = {
   upload,
   getCoursesByUserId,
   getLastQuedu,
-  updateQuedu
+  updateQuedu,
+  deleteCourse
 };
