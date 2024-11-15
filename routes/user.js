@@ -19,6 +19,7 @@ router.put('/quedu/update', verificarToken, UserController.updateQuedu);
 router.post('/user/subscribeTo', verificarToken, UserController.subscribeToCommunity);
 router.post('/user/shareQuedu', verificarToken, UserController.sharePersonalQuedu);
 router.delete('/course/delete', verificarToken, UserController.deleteCourse);
+router.put('/course/update', verificarToken, UserController.updateCourse);
 router.post('/user/course/quedu/generateQuedu', upload.single('document'), verificarToken, UserController.generateQuedu);
 
 module.exports = router;
