@@ -550,6 +550,7 @@ const getLastQuedu = async (req, res) => {
 // Actualizar un Quedu -----------------------------------------------------------------------
 
 const updateQuedu = async (req, res) => {
+  console.log("************* Acutalizando quedu *****************");
   try {
     // Desestructurar los datos del cuerpo de la solicitud
     const { userId, queduId, solved, successPercentaje, attempt } = req.body;
@@ -560,28 +561,30 @@ const updateQuedu = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
+    console.log("Usuario encontrado: ", user);
 
     // Buscar el personalQuedu dentro del arreglo courses.personalQuedus
-    let courseFound = false;
+    let queduFound = false;
+    console.log("***************** Iniciando iteracion de cursos *****************")
     for (const course of user.courses) {
-      const personalQueduIndex = course.personalQuedus.findIndex(
-        (quedu) => quedu._id.toString() === queduId.toString() // Comparar IDs como string
-      );
-
-      if (personalQueduIndex !== -1) {
-        // Encontramos el personalQuedu, actualizamos los campos
-        const personalQuedu = course.personalQuedus[personalQueduIndex];
-        personalQuedu.solved = solved;
-        personalQuedu.successPercentaje = successPercentaje;
-        personalQuedu.attempt = attempt;
-
-        // Marcamos que encontramos el course
-        courseFound = true;
+      console.log("Curso: ", course);
+      for (const quedu of course.personalQuedus){
+        console.log("iterando quedus: ", quedu);
+        if (quedu.id === queduId.toString()){
+          console.log("****************** Quedu encontrado!!!!!!!!!!!!\n\n\n\n\n");
+          quedu.solved = solved;
+          quedu.successPercentaje = successPercentaje;
+          quedu.attempt = attempt;
+          queduFound = true;
+          break;
+        }
+      }
+      if (queduFound){
         break;
       }
     }
 
-    if (!courseFound) {
+    if (!queduFound) {
       return res.status(404).json({ message: 'Quedu no encontrado para este usuario' });
     }
 
@@ -589,14 +592,13 @@ const updateQuedu = async (req, res) => {
     await user.save();
 
     // Enviar respuesta de éxito
+    console.log("quedu actualizado!")
     res.status(200).json({ message: 'Quedu actualizado correctamente', user });
   } catch (error) {
     console.error('Error al actualizar el quedu:', error);
     res.status(500).json({ message: 'Error al actualizar el quedu', error: error.message });
   }
 };
-
-
 
 
 // Exportar las funciones del controlador
