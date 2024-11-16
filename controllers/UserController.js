@@ -126,7 +126,7 @@ const getRecentPersonalQuedusByUser = async (req, res) => {
 
 
     if (!user) {
-      return res.status(404).json({ message: "Usuario no encontrado" });
+      console.log("Error: Usuario no encontrado.");
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
@@ -139,13 +139,12 @@ const getRecentPersonalQuedusByUser = async (req, res) => {
         createdAt: quedu.createdAt,
       }))
     }));
-
+    console.log("*************** Cursos encontrados! ***************");
     console.log("courses:", JSON.stringify(courses, null, 2));
 
     return res.status(200).json(courses)
   } catch (err) {
     console.error("Error al obtener los cursos y tests:", err);
-    return res.status(500).json({ message: "Error en la consulta" });
     return res.status(500).json({ message: "Error en la consulta" });
   }
 };
@@ -571,7 +570,7 @@ const updateQuedu = async (req, res) => {
       for (const quedu of course.personalQuedus){
         console.log("iterando quedus: ", quedu);
         if (quedu.id === queduId.toString()){
-          console.log("****************** Quedu encontrado!!!!!!!!!!!!\n\n\n\n\n");
+          console.log("****************** Quedu encontrado!!!!!!!!!!!!");
           quedu.solved = solved;
           quedu.successPercentaje = successPercentaje;
           quedu.attempt = attempt;
