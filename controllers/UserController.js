@@ -662,6 +662,52 @@ const updateCourse = async (req, res) => {
   }
 };
 
+const listAllQuedusFormatted = async (req, res) => {
+  try {
+    // Extraer datos del cuerpo de la solicitud
+    const userId = req.params.id;
+
+    // Validar si el `userId` tiene el formato correcto
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "ID de usuario no válido" });
+    }
+
+    // Obtener al usuario con sus cursos y quedus
+    const user = await User.findById(userId, {
+      "courses._id": 1,
+      "courses.name": 1,
+      "courses.personalQuedus": 1,
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
+    // Combinar todos los quedus en una sola lista con el formato deseado
+    const allQuedus = user.courses.flatMap(course => 
+      course.personalQuedus.map(quedu => ({
+        formattedName: `${quedu.name} - ${course.name}`,
+        courseId: course._id,
+        queduId: quedu._id,
+        createdAt: quedu.createdAt,
+      }))
+    );
+
+    // Ordenar por `createdAt` de más reciente a más antiguo
+    allQuedus.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    console.log("Todos los quedus listados correctamente: ", allQuedus);
+    // Devolver los datos en la respuesta
+    return res.status(200).json(allQuedus);
+
+  } catch (error) {
+    console.error("error al listar todos los quedus: ", error);
+    return res.status(500).json({
+      message: "Error al listar todos los quedus.",
+      error: error.message,
+    });
+  }
+};
+
 
 // Exportar las funciones del controlador
 module.exports = {
@@ -681,5 +727,6 @@ module.exports = {
   getLastQuedu,
   updateQuedu,
   deleteCourse,
-  updateCourse
+  updateCourse,
+  listAllQuedusFormatted
 };
