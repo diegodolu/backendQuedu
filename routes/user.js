@@ -17,7 +17,7 @@ router.post('/user/lastQuedu', verificarToken, UserController.getLastQuedu);
 router.get('/user/quedus/:id', verificarToken, UserController.getRecentPersonalQuedusByUser);
 router.get('/user/:id/quedus/:queduId', verificarToken, UserController.getPersonalQueduById);
 router.get('/user/allQuedus/:id', verificarToken, UserController.listAllQuedusFormatted);
-//router.get('/user/quedu/:userId/:courseId/:queduId', verificarToken, UserController.getQueduByIds);
+router.get('/user/quedu/:userId/:courseId/:queduId', verificarToken, UserController.getQueduByIds);
 router.get('/user/course/quedus', verificarToken, UserController.getQuedusByCourseId);
 router.put('/quedu/update', verificarToken, UserController.updateQuedu);
 router.post('/user/subscribeTo', verificarToken, UserController.subscribeToCommunity);
