@@ -660,8 +660,14 @@ const updateQuedu = async (req, res) => {
 
 const deleteCourse = async (req, res) => {
   try {
-    
-    const {userId, courseId} = req.body;
+    const { userId, courseId } = req.body;
+
+    if (!userId || !courseId) {
+      return res.status(400).json({
+        message: "Faltan datos necesarios. Asegúrate de enviar userId y courseId.",
+      });
+    }
+
     const result = await User.updateOne(
       { _id: userId }, // Buscar el usuario por ID
       { $pull: { courses: { _id: courseId } } } // Eliminar el curso embebido
@@ -669,38 +675,33 @@ const deleteCourse = async (req, res) => {
 
     if (result.modifiedCount > 0) {
       console.log("Curso eliminado correctamente.");
-      res.status(200).json({ message: 'Curso eliminado', result });
+      return res.status(200).json({ message: 'Curso eliminado', result });
     } else {
       console.log("No se encontró el curso para eliminar.");
-      res.status(404).json({ message: 'Curso no encontrado', error: error.message });
-
+      return res.status(404).json({ message: 'Curso no encontrado' });
     }
-    
   } catch (error) {
     console.error("Error al eliminar el curso:", error);
-    res.status(500).json({ message: 'Error servidor', error: error.message });
+    return res.status(500).json({ message: 'Error servidor', error: error.message });
   }
 };
 
+
 const updateCourse = async (req, res) => {
   try {
-    // Extraer datos del cuerpo de la solicitud
     const { userId, courseId, courseName } = req.body;
 
-    // Validar que todos los campos requeridos estén presentes
     if (!userId || !courseId || !courseName) {
       return res.status(400).json({
         message: "Faltan datos necesarios. Asegúrate de enviar userId, courseId y courseName.",
       });
     }
 
-    // Realizar la actualización del curso
     const result = await User.updateOne(
-      { _id: userId, "courses._id": courseId }, // Filtro para buscar usuario y curso
-      { $set: { "courses.$.name": courseName } } // Actualizar el nombre del curso
+      { _id: userId, "courses._id": courseId }, 
+      { $set: { "courses.$.name": courseName } }
     );
 
-    // Verificar si se actualizó algún documento
     if (result.modifiedCount > 0) {
       console.log("Curso actualizado correctamente:", result);
       return res.status(200).json({
