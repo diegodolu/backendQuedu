@@ -581,6 +581,7 @@ const getPersonalQueduById = async (req, res) => {
     console.log("userId:", userId, "queduId:", queduId);
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
+      console.log("ID de usuario no válido");
       return res.status(400).json({ message: "ID de usuario no válido" });
     }
     
@@ -589,9 +590,11 @@ const getPersonalQueduById = async (req, res) => {
     const personalQuedu = personalQuedus.find(quedu => quedu._id.toString() == queduId);
 
     if (!personalQuedus) {
+      console.log("Quedus personales no encontrados para este usuario");
       return res.status(404).json({ message: "Quedus personales no encontrados para este usuario" });
     }
 
+    console.log("personal quedu obtenido: ", personalQuedu);
     res.json(personalQuedu);
     
   } catch (error) {
@@ -764,7 +767,7 @@ const listAllQuedusFormatted = async (req, res) => {
   }
 };
 
-/*
+
 const getQueduByIds = async (req, res) => {
   try {
     // Extraer los IDs desde los parámetros de la solicitud
@@ -803,13 +806,7 @@ const getQueduByIds = async (req, res) => {
     }
 
     // Responder con los datos del quedu
-    return res.status(200).json({
-      quedu,
-      course: {
-        courseId: course._id,
-        courseName: course.name,
-      },
-    });
+    return res.status(200).json(quedu);
   } catch (error) {
     console.error("Error al obtener el quedu: ", error);
     return res.status(500).json({
@@ -818,7 +815,6 @@ const getQueduByIds = async (req, res) => {
     });
   }
 };
-*/
 
 
 // Exportar las funciones del controlador
@@ -842,5 +838,6 @@ module.exports = {
   updateCourse,
   getPersonalQueduById,
   listAllQuedusFormatted,
-  getQuedusByCourseId
+  getQuedusByCourseId,
+  getQueduByIds
 };
