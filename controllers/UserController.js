@@ -149,6 +149,31 @@ const getRecentPersonalQuedusByUser = async (req, res) => {
   }
 };
 
+// Obtener los quedus por curso
+const getQuedusByCourseId = async (req, res) => {
+  const { userId, courseId } = req.query;
+  if (!userId || !courseId) {
+    return res.status(400).json({ error: "Faltan parámetros requeridos (userId o courseId)." });
+  }
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado." });
+    }
+
+    const course = user.courses.find(course => course._id.toString() === courseId);
+    if (!course) {
+      return res.status(404).json({ error: "Curso no encontrado." });
+    }
+
+    const quedus = course.personalQuedus || [];
+    return res.status(200).json({ quedus });
+  } catch (error) {
+    console.error("Error al obtener los Quedus por curso:", error);
+    return res.status(500).json({ error: "Error al obtener los Quedus." });
+  }
+};
 
 // Generar Quedu con IA -----------------------------------------------------------------------
 const generateQuedu = async (req, res) => {
@@ -681,5 +706,6 @@ module.exports = {
   getLastQuedu,
   updateQuedu,
   deleteCourse,
-  updateCourse
+  updateCourse,
+  getQuedusByCourseId
 };
