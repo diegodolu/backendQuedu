@@ -708,6 +708,62 @@ const listAllQuedusFormatted = async (req, res) => {
   }
 };
 
+/*
+const getQueduByIds = async (req, res) => {
+  try {
+    // Extraer los IDs desde los parámetros de la solicitud
+    const { userId, courseId, queduId } = req.params;
+
+    // Validar que los IDs tengan el formato correcto
+    if (
+      !mongoose.Types.ObjectId.isValid(userId) ||
+      !mongoose.Types.ObjectId.isValid(courseId) ||
+      !mongoose.Types.ObjectId.isValid(queduId)
+    ) {
+      return res.status(400).json({ message: "Uno o más IDs no son válidos" });
+    }
+
+    // Buscar al usuario y filtrar por el curso y quedu
+    const user = await User.findById(userId, {
+      "courses._id": 1,
+      "courses.name": 1,
+      "courses.personalQuedus": 1,
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
+    // Encontrar el curso correspondiente
+    const course = user.courses.find(course => course._id.toString() === courseId);
+    if (!course) {
+      return res.status(404).json({ message: "Curso no encontrado" });
+    }
+
+    // Encontrar el quedu correspondiente
+    const quedu = course.personalQuedus.find(quedu => quedu._id.toString() === queduId);
+    if (!quedu) {
+      return res.status(404).json({ message: "Quedu no encontrado" });
+    }
+
+    // Responder con los datos del quedu
+    return res.status(200).json({
+      quedu,
+      course: {
+        courseId: course._id,
+        courseName: course.name,
+      },
+    });
+  } catch (error) {
+    console.error("Error al obtener el quedu: ", error);
+    return res.status(500).json({
+      message: "Error al obtener el quedu.",
+      error: error.message,
+    });
+  }
+};
+*/
+
 
 // Exportar las funciones del controlador
 module.exports = {
@@ -728,5 +784,6 @@ module.exports = {
   updateQuedu,
   deleteCourse,
   updateCourse,
-  listAllQuedusFormatted
+  listAllQuedusFormatted,
+  //getQueduByIds
 };
