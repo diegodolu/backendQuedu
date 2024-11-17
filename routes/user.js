@@ -15,6 +15,7 @@ router.post('/user/course/new', verificarToken, UserController.createCourse);
 router.post('/user/course/quedu/new', UserController.createPersonalQuedus);
 router.post('/user/lastQuedu', verificarToken, UserController.getLastQuedu);
 router.get('/user/quedus/:id', verificarToken, UserController.getRecentPersonalQuedusByUser);
+router.get('/user/:id/quedus/:queduId', verificarToken, UserController.getPersonalQueduById);
 router.put('/quedu/update', verificarToken, UserController.updateQuedu);
 router.post('/user/subscribeTo', verificarToken, UserController.subscribeToCommunity);
 router.post('/user/shareQuedu', verificarToken, UserController.sharePersonalQuedu);

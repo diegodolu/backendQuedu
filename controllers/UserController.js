@@ -546,6 +546,37 @@ const getLastQuedu = async (req, res) => {
 };
 
 
+// Conseguir un quedu en específico de un usuario -----------------------------------------
+
+const getPersonalQueduById = async (req, res) => {
+  try {
+    console.log("Desde el getPersonalQueduById");
+    const userId = req.params.id;
+    const queduId = req.params.queduId;
+    console.log("userId:", userId, "queduId:", queduId);
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "ID de usuario no válido" });
+    }
+    
+    const user = await User.findById(userId, { "courses.personalQuedus": 1 });
+    const personalQuedus = user.courses[0]?.personalQuedus;
+    const personalQuedu = personalQuedus.find(quedu => quedu._id.toString() == queduId);
+
+    if (!personalQuedus) {
+      return res.status(404).json({ message: "Quedus personales no encontrados para este usuario" });
+    }
+
+    res.json(personalQuedu);
+    
+  } catch (error) {
+    console.error("Error al obtener el quedu:", error);
+    res.status(500).json({ message: "Error al obtener el quedu" });
+  }
+};
+
+
+
 // Actualizar un Quedu -----------------------------------------------------------------------
 
 const updateQuedu = async (req, res) => {
@@ -681,5 +712,6 @@ module.exports = {
   getLastQuedu,
   updateQuedu,
   deleteCourse,
-  updateCourse
+  updateCourse,
+  getPersonalQueduById,
 };
