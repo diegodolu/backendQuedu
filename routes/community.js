@@ -6,6 +6,6 @@ const router = express.Router();
 
 router.get('/communities', verificarToken, CommunityController.getCommunity);
 router.post('/community/new', verificarToken, CommunityController.createCommunity);
-router.post('/community', verificarToken, CommunityController.getCommunityById);
+router.get('/community/:communityId', verificarToken, CommunityController.getCommunityById);
 
 module.exports = router;

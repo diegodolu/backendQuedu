@@ -11,7 +11,7 @@ const mammoth = require('mammoth');
 const { extractTextFromPptx } = require('./textExtraction');
 const fs = require('fs');
 const mongoose = require("mongoose");
-
+require('dotenv').config();
 const { generatePrompt } = require("../controllers/generarPromptController");
 
 // ---------------------------------------------- Usuarios ----------------------------------------------
@@ -63,12 +63,11 @@ const createUser = async (req, res) => {
     user.password = hashedPassword;
     user.email = req.body.email;
     await user.save();
-    // debug
-    console.log("Creacion de usuario exitoso: ", user);
+   
+    console.log("Creacion de usuario exitoso: ", user);  // debug
     res.status(201).send({ user });
   } catch (err) {
-    // debug
-    console.error("Error al crear usuario: ", err.message);
+    console.error("Error al crear usuario: ", err.message);  // debug
     res.status(500).send({ message: "Error al guardar el usuario" });
   }
 };
@@ -108,22 +107,17 @@ const loginUser = async (req, res) => {
 const getRecentPersonalQuedusByUser = async (req, res) => {
   try {
     const userId = req.params.id;
-    console.log(req.params);
 
     // Validar si el `userId` tiene el formato correcto
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ message: "ID de usuario no válido" });
     }
 
-    // Ya no es necesario invocar `new` al crear el ObjectId
     const user = await User.findById(userId, {
       "courses._id": 1,
       "courses.name": 1,
       "courses.personalQuedus": 1, // Obtener todo el array de personalQuedus
-      "courses.personalQuedus": 1, // Obtener todo el array de personalQuedus
     });
-
-
 
     if (!user) {
       console.log("Error: Usuario no encontrado.");
@@ -151,7 +145,7 @@ const getRecentPersonalQuedusByUser = async (req, res) => {
 
 // Obtener los quedus por curso
 const getQuedusByCourseId = async (req, res) => {
-  const { userId, courseId } = req.query;
+  const { userId, courseId } = req.params;
   if (!userId || !courseId) {
     return res.status(400).json({ error: "Faltan parámetros requeridos (userId o courseId)." });
   }
@@ -234,7 +228,7 @@ const generateQuedu = async (req, res) => {
       },
       {
         headers: {
-          Authorization: `Bearer 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`, // Reemplaza con tu clave de API
+          Authorization: `Bearer ${process.env.API_KEY}`, // Reemplaza con tu clave de API
           "Content-Type": "application/json",
         },
       }
@@ -264,8 +258,6 @@ const generateQuedu = async (req, res) => {
     // debug
     console.log("Parseo exitoso: ", parsedData);
 
-    // modificacion para agregar quedus a usuarios - kana
-    // envio final de la api
     const envioFinal = {
       userId: userId,
       courseName: courseName,
@@ -284,60 +276,8 @@ const generateQuedu = async (req, res) => {
   }
 };
 
+
 // Crear un Quedu ------------------------------------------------------------------------------
-const createQuedu = async ({ userId, course, name, questions }) => {
-  try {
-    // Crear un nuevo personalQuedu en la base de datos
-    const queduData = {
-      name,
-      successPercentaje: 100, // O un valor que determines
-      attempt: 1, // O el número de intentos
-      questions,
-      solved: false, // Opcional, dependiendo de tu lógica
-    };
-
-    const quedu = await User.updateOne(
-      { _id: userId, "courses.name": course },
-      { $push: { "courses.$.personalQuedus": queduData } }
-    );
-
-    return quedu; // Devuelve el quedu creado
-  } catch (error) {
-    // debug
-    console.error("Error al crear el Quedu:", error);
-    throw new Error("No se pudo crear el Quedu"); // Lanza un error si algo falla
-  }
-};
-
-// Añadir la función recibe file ------------------------------------------------------------------------------
-//const recibeFile = async (req, res) => {
-//  try {
-//    const { userId, course, queduName, questions } = req.body;
-//    const documentFile = req.file;
-//
-//    console.log("Datos recibidos:");
-//    console.log("userId: ", userId);
-//    console.log("course: ", course);
-//    console.log("queduName: ", queduName);
-//    console.log("questions: ", questions);
-//    console.log("Archivo recibido: ", documentFile);
-//
-//    const filePath = documentFile.path;
-//
-//    const dataBuffer = await fs.promises.readFile(filePath);
-//    const pdfData = await pdfParse(dataBuffer)
-//    const extractedText = pdfData.text;
-//
-//    console.log("Texto extraído del PDF: ", extractedText);
-//
-//    res.status(200).send({ message: 'Datos recibidos y texto extraído correctamente', extractedText });
-//  } catch (error) {
-//    console.error("Error al crear el Quedu con archivo: ", error);
-//    res.status(500).send({ message: "Error al recibir datos" });
-//  }
-//}
-
-// Crear un Quedu para Postman ----------------------------------------------------------------
 
 const createPersonalQuedus = async (req, res) => {
   try {
@@ -346,7 +286,7 @@ const createPersonalQuedus = async (req, res) => {
     // Valida y ajusta el successPercentaje basado en las respuestas correctas
     const updatedQuedus = quedus.map((quedu) => {
       // Validar que haya al menos 2 preguntas
-      if (quedu.questions.length < 1) {
+      if (quedu.questions.length < 5) {
         throw new Error("Cada quedu debe tener al menos 1 pregunta.");
       }
 
@@ -360,17 +300,17 @@ const createPersonalQuedus = async (req, res) => {
         }
       });
 
-      // Calcular el porcentaje de éxito en función de las respuestas correctas
-      const totalQuestions = quedu.questions.length;
-      const correctAnswers = quedu.questions
-        .flatMap((q) => q.answers)
-        .filter((a) => a.correct).length;
-      const percentageSteps = [0, 20, 40, 60, 80, 100]; // Posibles valores de successPercentaje
-      const successPercentage =
-        percentageSteps[
-          Math.floor((correctAnswers / (totalQuestions * 5)) * 5)
-        ];
-      quedu.successPercentaje = successPercentage;
+      // // Calcular el porcentaje de éxito en función de las respuestas correctas
+      // const totalQuestions = quedu.questions.length;
+      // const correctAnswers = quedu.questions
+      //   .flatMap((q) => q.answers)
+      //   .filter((a) => a.correct).length;
+      // const percentageSteps = [0, 20, 40, 60, 80, 100]; // Posibles valores de successPercentaje
+      // const successPercentage =
+      //   percentageSteps[
+      //     Math.floor((correctAnswers / (totalQuestions * 5)) * 5)
+      //   ];
+      quedu.successPercentaje = 0;
 
       return quedu;
     });
@@ -407,7 +347,6 @@ const createCourse = async (req, res) => {
 
     // Usa el ID del usuario autenticado desde el middleware
     const userId = req.usuario._id;
-    // console.log("User ID obtenido del token:", userId);
 
     // Verifica si el usuario existe
     const user = await User.findById(userId);
@@ -547,7 +486,7 @@ const sharePersonalQuedu = async (req, res) => {
 };
 
 const getLastQuedu = async (req, res) => {
-  const { userId } = req.body;
+  const { userId } = req.params;
   try {
     const user = await User.findById(userId).select("courses.personalQuedus");
 
@@ -724,7 +663,6 @@ const updateCourse = async (req, res) => {
 
 const listAllQuedusFormatted = async (req, res) => {
   try {
-    // Extraer datos del cuerpo de la solicitud
     const userId = req.params.id;
 
     // Validar si el `userId` tiene el formato correcto
@@ -771,7 +709,6 @@ const listAllQuedusFormatted = async (req, res) => {
 
 const getQueduByIds = async (req, res) => {
   try {
-    // Extraer los IDs desde los parámetros de la solicitud
     const { userId, courseId, queduId } = req.params;
 
     // Validar que los IDs tengan el formato correcto
@@ -826,7 +763,6 @@ module.exports = {
   createUser,
   getRecentPersonalQuedusByUser,
   generateQuedu,
-  createQuedu,
   createCourse,
   createPersonalQuedus,
   subscribeToCommunity,

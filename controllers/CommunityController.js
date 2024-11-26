@@ -31,7 +31,7 @@ const createCommunity = async (req, res) => {
 
 const getCommunityById = async (req, res) => {
   try {
-    const { communityId } = req.body;
+    const { communityId } = req.params;
     console.log("Cuerpo de la solicitud:", req.body);
 
     // Verificar si el ID es válido
