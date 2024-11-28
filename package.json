@@ -26,6 +26,8 @@
     "officeparser": "^5.0.0",
     "pdf-parse": "^1.1.1",
     "pptx-parser": "^1.1.7-beta.9",
-    "pptx2json": "^0.0.10"
+    "pptx2json": "^0.0.10",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   }
 }

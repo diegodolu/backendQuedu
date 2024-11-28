@@ -2,10 +2,13 @@ const express = require('express');
 const app = express();
 const verificarToken = require('./middlewares/authMiddleware');
 const cors = require('cors');
+const swaggerUi = require("swagger-ui-express");
+const swaggerSpec = require("./swagger");
 
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Importamos las rutas
 var user_routes = require('./routes/user'); 
