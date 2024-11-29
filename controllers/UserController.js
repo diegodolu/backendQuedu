@@ -299,17 +299,6 @@ const createPersonalQuedus = async (req, res) => {
           throw new Error("Cada pregunta debe tener al menos 1 respuesta.");
         }
       });
-
-      // // Calcular el porcentaje de éxito en función de las respuestas correctas
-      // const totalQuestions = quedu.questions.length;
-      // const correctAnswers = quedu.questions
-      //   .flatMap((q) => q.answers)
-      //   .filter((a) => a.correct).length;
-      // const percentageSteps = [0, 20, 40, 60, 80, 100]; // Posibles valores de successPercentaje
-      // const successPercentage =
-      //   percentageSteps[
-      //     Math.floor((correctAnswers / (totalQuestions * 5)) * 5)
-      //   ];
       quedu.successPercentaje = 0;
 
       return quedu;
